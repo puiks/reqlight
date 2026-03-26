@@ -80,7 +80,6 @@ export interface AppState {
 
 export type EditorTab = "params" | "headers" | "body";
 export type ResponseTab = "body" | "headers";
-export type AppAppearance = "system" | "light" | "dark";
 
 export const HTTP_METHODS: HttpMethod[] = [
   "GET",
