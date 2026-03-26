@@ -10,6 +10,7 @@ import {
   type RequestHistoryEntry,
   type SavedRequest,
 } from "../types";
+import { handleError } from "../utils/errors";
 
 class AppStore {
   collections = $state<RequestCollection[]>([]);
@@ -77,7 +78,7 @@ class AppStore {
       this.selectedRequestId = state.lastSelectedRequestId;
       this.history = state.history;
     } catch (e) {
-      console.warn("Failed to load state, starting fresh:", e);
+      handleError(e, "AppStore.load", { silent: true });
     } finally {
       this.isLoading = false;
     }
@@ -87,6 +88,15 @@ class AppStore {
   scheduleSave() {
     if (this.saveTimer) clearTimeout(this.saveTimer);
     this.saveTimer = setTimeout(() => this.save(), SAVE_DEBOUNCE_MS);
+  }
+
+  // Immediately flush any pending debounced save (for window close)
+  flushSave() {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+      this.save();
+    }
   }
 
   private async save() {
@@ -101,7 +111,7 @@ class AppStore {
     try {
       await saveState(state);
     } catch (e) {
-      console.error("Failed to save state:", e);
+      handleError(e, "AppStore.save");
     }
   }
 
@@ -221,6 +231,18 @@ class AppStore {
   selectRequest(collectionId: string, requestId: string) {
     this.selectedCollectionId = collectionId;
     this.selectedRequestId = requestId;
+    this.scheduleSave();
+  }
+
+  reorderRequest(collectionId: string, fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) return;
+    this.collections = this.collections.map((c) => {
+      if (c.id !== collectionId) return c;
+      const requests = [...c.requests];
+      const [moved] = requests.splice(fromIndex, 1);
+      requests.splice(toIndex, 0, moved);
+      return { ...c, requests };
+    });
     this.scheduleSave();
   }
 

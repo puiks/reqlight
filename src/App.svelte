@@ -22,12 +22,6 @@
       }
     });
 
-    // Apply saved theme
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      document.documentElement.setAttribute("data-theme", savedTheme);
-    }
-
     // Register keyboard shortcuts
     const cleanup = initKeyboardShortcuts();
 
@@ -76,6 +70,7 @@
     // Save on window close / unload
     const handleBeforeUnload = () => {
       editorStore.saveIfDirty();
+      appStore.flushSave();
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 

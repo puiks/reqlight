@@ -5,6 +5,8 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use crate::models::{HeaderPair, HttpMethod, KeyValuePair, RequestBody, ResponseRecord};
 
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
+/// Max response body size we'll read into memory (5 MB)
+const MAX_RESPONSE_BODY_BYTES: usize = 5 * 1024 * 1024;
 
 /// Execute an HTTP request and return a ResponseRecord.
 pub async fn execute(
@@ -16,8 +18,7 @@ pub async fn execute(
     timeout_secs: Option<u64>,
 ) -> Result<ResponseRecord, String> {
     // Build URL with query params
-    let mut parsed_url =
-        reqwest::Url::parse(url).map_err(|e| format!("Invalid URL: {e}"))?;
+    let mut parsed_url = reqwest::Url::parse(url).map_err(|e| format!("Invalid URL: {e}"))?;
 
     {
         let enabled_params: Vec<_> = query_params
@@ -63,7 +64,7 @@ pub async fn execute(
     // Set body and auto-set Content-Type if not specified
     match body {
         RequestBody::Json(text) => {
-            if !header_map.contains_key("content-type") {
+            if !header_map.contains_key(reqwest::header::CONTENT_TYPE) {
                 header_map.insert(
                     reqwest::header::CONTENT_TYPE,
                     HeaderValue::from_static("application/json"),
@@ -72,7 +73,7 @@ pub async fn execute(
             request = request.body(text.clone());
         }
         RequestBody::FormData(pairs) => {
-            if !header_map.contains_key("content-type") {
+            if !header_map.contains_key(reqwest::header::CONTENT_TYPE) {
                 header_map.insert(
                     reqwest::header::CONTENT_TYPE,
                     HeaderValue::from_static("application/x-www-form-urlencoded"),
@@ -102,7 +103,10 @@ pub async fn execute(
 
     // Execute with timing
     let start = Instant::now();
-    let response = request.send().await.map_err(|e| format!("Request failed: {e}"))?;
+    let response = request
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {e}"))?;
     let elapsed = start.elapsed().as_secs_f64() * 1000.0;
 
     let status_code = response.status().as_u16() as i32;
@@ -130,7 +134,14 @@ pub async fn execute(
         .await
         .map_err(|e| format!("Failed to read response body: {e}"))?;
     let body_size = body_bytes.len();
-    let body_string = String::from_utf8(body_bytes.to_vec()).ok();
+
+    let (body_string, is_truncated) = if body_size > MAX_RESPONSE_BODY_BYTES {
+        let truncated = &body_bytes[..MAX_RESPONSE_BODY_BYTES];
+        let s = String::from_utf8_lossy(truncated).into_owned();
+        (Some(s), true)
+    } else {
+        (String::from_utf8(body_bytes.to_vec()).ok(), false)
+    };
 
     Ok(ResponseRecord {
         status_code,
@@ -139,5 +150,6 @@ pub async fn execute(
         elapsed_time: elapsed,
         body_size,
         is_json,
+        is_truncated,
     })
 }
