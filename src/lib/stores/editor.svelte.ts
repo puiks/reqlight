@@ -13,6 +13,7 @@ import {
   type ResponseTab,
   type SavedRequest,
 } from "../types";
+import { DEFAULT_REQUEST_TIMEOUT } from "../constants";
 import { appStore } from "./app.svelte";
 
 class EditorStore {
@@ -35,6 +36,7 @@ class EditorStore {
   isLoading = $state(false);
   errorMessage = $state<string | null>(null);
   isDirty = $state(false);
+  timeoutSecs = $state(DEFAULT_REQUEST_TIMEOUT);
 
   // Derived
   get isUrlValid(): boolean {
@@ -136,6 +138,7 @@ class EditorStore {
         headers: this.headers,
         queryParams: this.queryParams,
         body,
+        timeoutSecs: this.timeoutSecs,
         environment: appStore.activeEnvironment,
       });
       this.response = result;

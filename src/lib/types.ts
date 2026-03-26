@@ -64,6 +64,7 @@ export interface ResponseRecord {
   elapsedTime: number;
   bodySize: number;
   isJson: boolean;
+  isTruncated: boolean;
 }
 
 export interface AppState {

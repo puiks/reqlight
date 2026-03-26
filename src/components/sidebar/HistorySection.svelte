@@ -1,10 +1,29 @@
 <script lang="ts">
   import { appStore } from "../../lib/stores/app.svelte";
+  import { editorStore } from "../../lib/stores/editor.svelte";
+  import { createEmptyPair, createEmptyBody, type RequestHistoryEntry } from "../../lib/types";
   import HttpMethodBadge from "../shared/HttpMethodBadge.svelte";
 
   let expanded = $state(false);
 
   const recentHistory = $derived(appStore.history.slice(0, 10));
+
+  function replayEntry(entry: RequestHistoryEntry) {
+    editorStore.saveIfDirty();
+    editorStore.requestId = null;
+    editorStore.name = "History Replay";
+    editorStore.method = entry.method;
+    editorStore.url = entry.url;
+    editorStore.queryParams = [createEmptyPair()];
+    editorStore.headers = [createEmptyPair()];
+    editorStore.bodyType = "none";
+    editorStore.jsonBody = "";
+    editorStore.rawBody = "";
+    editorStore.formPairs = [createEmptyPair()];
+    editorStore.response = null;
+    editorStore.errorMessage = null;
+    editorStore.isDirty = false;
+  }
 </script>
 
 {#if appStore.history.length > 0}
@@ -19,7 +38,9 @@
     {#if expanded}
       <div class="entries">
         {#each recentHistory as entry (entry.id)}
-          <div class="entry">
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div class="entry" onclick={() => replayEntry(entry)}>
             <HttpMethodBadge method={entry.method} />
             <span class="url">{entry.url}</span>
             {#if entry.statusCode}
@@ -85,6 +106,10 @@
     padding: 3px var(--sp-sm);
     font-size: var(--fs-footnote);
     border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .entry:hover {
+    background: var(--bg-hover);
   }
   .url {
     flex: 1;
