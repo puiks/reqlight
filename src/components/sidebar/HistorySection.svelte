@@ -30,13 +30,13 @@
       }
     }
 
-    // Otherwise replay from snapshot (detached)
+    // Otherwise replay from snapshot (detached — use temp ID so editor renders)
     if (entry.snapshot) {
       editorStore.loadFrom({ ...entry.snapshot, id: crypto.randomUUID(), name: entry.requestName || "History Replay" });
-      editorStore.requestId = null;
       editorStore.isDirty = false;
     } else {
-      editorStore.requestId = null;
+      // Fallback: only method + URL available (old history entries)
+      editorStore.requestId = crypto.randomUUID();
       editorStore.name = entry.requestName || "History Replay";
       editorStore.method = entry.method;
       editorStore.url = entry.url;
