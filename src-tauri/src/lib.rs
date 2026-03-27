@@ -1,10 +1,12 @@
 mod commands;
 mod models;
 mod services;
+#[cfg(test)]
+mod test_utils;
 
 use std::sync::Arc;
 
-use commands::{curl, http, keychain, persistence, websocket};
+use commands::{collection_io, curl, http, keychain, persistence, websocket};
 use services::websocket::WsManager;
 use tokio::sync::Notify;
 
@@ -20,7 +22,6 @@ pub fn run() {
         .expect("Failed to create HTTP client");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(SharedHttpClient(Arc::new(http_client)))
         .manage(http::RequestCanceller(Arc::new(Notify::new())))
         .manage(WsManager::new())
@@ -42,6 +43,11 @@ pub fn run() {
             websocket::ws_connect,
             websocket::ws_send,
             websocket::ws_disconnect,
+            // Collection I/O
+            collection_io::import_postman_collection,
+            collection_io::export_postman_collection,
+            collection_io::import_postman_environment,
+            collection_io::export_postman_environment,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

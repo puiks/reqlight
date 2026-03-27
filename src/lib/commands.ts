@@ -62,6 +62,7 @@ export async function sendRequest(params: {
   body: RequestBody;
   auth: AuthConfig;
   timeoutSecs?: number;
+  followRedirects?: boolean;
   environment?: RequestEnvironment;
 }): Promise<ResponseRecord> {
   return invoke<ResponseRecord>("send_request", params);
@@ -99,6 +100,31 @@ export async function exportCurl(
   environment?: RequestEnvironment,
 ): Promise<string> {
   return invoke<string>("export_curl", { request, environment });
+}
+
+// Collection I/O
+export async function importPostmanCollection(
+  jsonStr: string,
+): Promise<import("./types").RequestCollection> {
+  return invoke("import_postman_collection", { jsonStr });
+}
+
+export async function exportPostmanCollection(
+  collection: import("./types").RequestCollection,
+): Promise<string> {
+  return invoke("export_postman_collection", { collection });
+}
+
+export async function importPostmanEnvironment(
+  jsonStr: string,
+): Promise<import("./types").RequestEnvironment> {
+  return invoke("import_postman_environment", { jsonStr });
+}
+
+export async function exportPostmanEnvironment(
+  environment: import("./types").RequestEnvironment,
+): Promise<string> {
+  return invoke("export_postman_environment", { environment });
 }
 
 // WebSocket

@@ -65,6 +65,7 @@ describe("ResponseView", () => {
       bodySize: 11,
       isJson: true,
       isTruncated: false,
+      contentType: "application/json",
     };
     render(ResponseView);
     expect(screen.getByText("Body")).toBeInTheDocument();

@@ -3,17 +3,20 @@ import {
   buildAuthConfig,
   buildRequestBody,
   createEmptyAuth,
+  createEmptyMultipartField,
   createEmptyPair,
   getAuthType,
   getBodyContent,
   getBodyType,
   getFormPairs,
+  getMultipartFields,
   type ApiKeyLocation,
   type AuthType,
   type BodyType,
   type EditorTab,
   type HttpMethod,
   type KeyValuePair,
+  type MultipartField,
   type ResponseRecord,
   type ResponseTab,
   type SavedRequest,
@@ -35,6 +38,7 @@ class EditorStore {
   jsonBody = $state("");
   rawBody = $state("");
   formPairs = $state<KeyValuePair[]>([createEmptyPair()]);
+  multipartFields = $state<MultipartField[]>([createEmptyMultipartField()]);
 
   // Auth fields
   authType = $state<AuthType>("none");
@@ -53,6 +57,7 @@ class EditorStore {
   errorMessage = $state<string | null>(null);
   isDirty = $state(false);
   timeoutSecs = $state(DEFAULT_REQUEST_TIMEOUT);
+  followRedirects = $state(true);
   protocolMode = $state<"http" | "ws">("http");
 
   // Derived
@@ -92,6 +97,9 @@ class EditorStore {
     this.formPairs = getFormPairs(request.body).length
       ? [...getFormPairs(request.body)]
       : [createEmptyPair()];
+    this.multipartFields = getMultipartFields(request.body).length
+      ? [...getMultipartFields(request.body)]
+      : [createEmptyMultipartField()];
     this.loadAuth(request.auth);
     this.response = null;
     this.errorMessage = null;
@@ -133,6 +141,7 @@ class EditorStore {
         this.jsonBody,
         this.rawBody,
         this.formPairs.filter((p) => !p.key && !p.value ? false : true),
+        this.multipartFields.filter((f) => !f.name ? false : true),
       ),
       auth: buildAuthConfig(
         this.authType,
@@ -175,6 +184,7 @@ class EditorStore {
         this.jsonBody,
         this.rawBody,
         this.formPairs,
+        this.multipartFields,
       );
       const auth = buildAuthConfig(
         this.authType,
@@ -190,6 +200,7 @@ class EditorStore {
         body,
         auth,
         timeoutSecs: this.timeoutSecs,
+        followRedirects: this.followRedirects,
         environment: environmentStore.activeEnvironment,
       });
       this.response = result;
@@ -233,6 +244,7 @@ class EditorStore {
     this.jsonBody = "";
     this.rawBody = "";
     this.formPairs = [createEmptyPair()];
+    this.multipartFields = [createEmptyMultipartField()];
     this.authType = "none";
     this.bearerToken = "";
     this.basicUsername = "";

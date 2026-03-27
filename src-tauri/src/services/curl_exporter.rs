@@ -117,6 +117,23 @@ pub fn export(request: &SavedRequest, environment: Option<&RequestEnvironment>) 
                 .join("&");
             parts.push(format!("-d '{}'", shell_escape(&encoded)));
         }
+        RequestBody::Multipart(fields) => {
+            for field in fields.iter().filter(|f| f.is_enabled && !f.name.is_empty()) {
+                if let Some(ref path) = field.file_path {
+                    parts.push(format!(
+                        "-F '{}=@{}'",
+                        shell_escape(&field.name),
+                        shell_escape(path)
+                    ));
+                } else {
+                    parts.push(format!(
+                        "-F '{}={}'",
+                        shell_escape(&field.name),
+                        shell_escape(&field.value)
+                    ));
+                }
+            }
+        }
         RequestBody::None => {}
     }
 
@@ -138,20 +155,9 @@ fn shell_escape(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{
-        ApiKeyLocation, AuthConfig, HttpMethod, KeyValuePair, RequestBody, SavedRequest,
-    };
+    use crate::models::{ApiKeyLocation, AuthConfig, HttpMethod, RequestBody, SavedRequest};
+    use crate::test_utils::make_kv;
     use uuid::Uuid;
-
-    fn make_kv(key: &str, value: &str) -> KeyValuePair {
-        KeyValuePair {
-            id: Uuid::new_v4(),
-            key: key.to_string(),
-            value: value.to_string(),
-            is_enabled: true,
-            is_secret: false,
-        }
-    }
 
     fn base_request() -> SavedRequest {
         SavedRequest {

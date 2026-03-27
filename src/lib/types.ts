@@ -8,13 +8,22 @@ export interface KeyValuePair {
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+export interface MultipartField {
+  id: string;
+  name: string;
+  value: string;
+  filePath?: string;
+  isEnabled: boolean;
+}
+
 export type RequestBody =
   | { none: Record<string, never> }
   | { json: { _0: string } }
   | { formData: { _0: KeyValuePair[] } }
-  | { rawText: { _0: string } };
+  | { rawText: { _0: string } }
+  | { multipart: { _0: MultipartField[] } };
 
-export type BodyType = "none" | "json" | "formData" | "rawText";
+export type BodyType = "none" | "json" | "formData" | "rawText" | "multipart";
 
 // Auth types
 export type AuthType = "none" | "bearerToken" | "basicAuth" | "apiKey";
@@ -78,6 +87,7 @@ export interface ResponseRecord {
   bodySize: number;
   isJson: boolean;
   isTruncated: boolean;
+  contentType: string;
 }
 
 export interface AppState {
@@ -130,7 +140,22 @@ export function getBodyType(body: RequestBody): BodyType {
   if ("json" in body) return "json";
   if ("formData" in body) return "formData";
   if ("rawText" in body) return "rawText";
+  if ("multipart" in body) return "multipart";
   return "none";
+}
+
+export function getMultipartFields(body: RequestBody): MultipartField[] {
+  if ("multipart" in body) return body.multipart._0;
+  return [];
+}
+
+export function createEmptyMultipartField(): MultipartField {
+  return {
+    id: crypto.randomUUID(),
+    name: "",
+    value: "",
+    isEnabled: true,
+  };
 }
 
 // Helper: get body content from RequestBody
@@ -152,6 +177,7 @@ export function buildRequestBody(
   jsonText: string,
   rawText: string,
   formPairs: KeyValuePair[],
+  multipartFields?: MultipartField[],
 ): RequestBody {
   switch (type) {
     case "none":
@@ -162,6 +188,8 @@ export function buildRequestBody(
       return { formData: { _0: formPairs } };
     case "rawText":
       return { rawText: { _0: rawText } };
+    case "multipart":
+      return { multipart: { _0: multipartFields ?? [] } };
   }
 }
 

@@ -247,3 +247,54 @@ button:hover {
     color: #569cd6;
   }
 }
+
+/* ===== XML/HTML Syntax Highlighting ===== */
+.xml-tag {
+  color: #800000;
+}
+.xml-attr {
+  color: #e50000;
+}
+.xml-value {
+  color: #0451a5;
+}
+.xml-bracket {
+  color: #800000;
+}
+.xml-comment {
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="dark"] .xml-tag,
+:root:not([data-theme="light"]) .xml-tag {
+  color: #569cd6;
+}
+[data-theme="dark"] .xml-attr,
+:root:not([data-theme="light"]) .xml-attr {
+  color: #9cdcfe;
+}
+[data-theme="dark"] .xml-value,
+:root:not([data-theme="light"]) .xml-value {
+  color: #ce9178;
+}
+[data-theme="dark"] .xml-bracket,
+:root:not([data-theme="light"]) .xml-bracket {
+  color: #808080;
+}
+[data-theme="dark"] .xml-comment,
+:root:not([data-theme="light"]) .xml-comment {
+  color: #6a9955;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .xml-tag {
+    color: #569cd6;
+  }
+  :root:not([data-theme="light"]) .xml-attr {
+    color: #9cdcfe;
+  }
+  :root:not([data-theme="light"]) .xml-value {
+    color: #ce9178;
+  }
+}
