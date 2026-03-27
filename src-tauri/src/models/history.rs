@@ -16,4 +16,8 @@ pub struct RequestHistoryEntry {
     pub timestamp: String,
     #[serde(default)]
     pub elapsed_time: Option<f64>,
+    #[serde(default)]
+    pub request_id: Option<String>,
+    #[serde(default)]
+    pub request_name: Option<String>,
 }

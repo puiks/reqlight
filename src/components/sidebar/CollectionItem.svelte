@@ -7,9 +7,13 @@
   let {
     collection,
     oncontextmenu,
+    ondelete,
+    ondeleterequest,
   }: {
     collection: RequestCollection;
     oncontextmenu?: (e: MouseEvent) => void;
+    ondelete?: () => void;
+    ondeleterequest?: (requestId: string, requestName: string) => void;
   } = $props();
 
   let expanded = $state(true);
@@ -62,6 +66,13 @@
     <span class="chevron" class:expanded>{expanded ? "▾" : "▸"}</span>
     <span class="name">{collection.name}</span>
     <span class="count">{collection.requests.length}</span>
+    {#if ondelete}
+      <button
+        class="delete-btn"
+        title="Delete Collection"
+        onclick={(e) => { e.stopPropagation(); ondelete?.(); }}
+      >✕</button>
+    {/if}
   </div>
   {#if expanded}
     <div class="requests">
@@ -82,6 +93,7 @@
             {request}
             isSelected={appStore.selectedRequestId === request.id}
             onclick={() => selectRequest(request.id)}
+            ondelete={() => ondeleterequest?.(request.id, request.name)}
           />
         </div>
       {/each}
@@ -107,9 +119,9 @@
     background: var(--bg-hover);
   }
   .chevron {
-    font-size: 10px;
+    font-size: var(--fs-small);
     color: var(--text-secondary);
-    width: 12px;
+    width: 14px;
     text-align: center;
   }
   .name {
@@ -122,6 +134,20 @@
     font-size: var(--fs-caption);
     color: var(--text-tertiary);
     font-weight: 400;
+  }
+  .delete-btn {
+    visibility: hidden;
+    font-size: var(--fs-body);
+    color: var(--text-tertiary);
+    padding: 0 var(--sp-xs);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .delete-btn:hover {
+    color: var(--color-error);
+  }
+  .header:hover .delete-btn {
+    visibility: visible;
   }
   .requests {
     padding-left: var(--sp-xs);

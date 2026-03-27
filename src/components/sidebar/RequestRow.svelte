@@ -7,11 +7,13 @@
     isSelected = false,
     onclick,
     oncontextmenu,
+    ondelete,
   }: {
     request: SavedRequest;
     isSelected?: boolean;
     onclick: () => void;
     oncontextmenu?: (e: MouseEvent) => void;
+    ondelete?: () => void;
   } = $props();
 </script>
 
@@ -25,6 +27,13 @@
 >
   <HttpMethodBadge method={request.method} />
   <span class="name">{request.name}</span>
+  {#if ondelete}
+    <button
+      class="delete-btn"
+      title="Delete"
+      onclick={(e) => { e.stopPropagation(); ondelete?.(); }}
+    >✕</button>
+  {/if}
 </div>
 
 <style>
@@ -49,5 +58,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+  }
+  .delete-btn {
+    visibility: hidden;
+    font-size: var(--fs-body);
+    color: var(--text-tertiary);
+    padding: 0 var(--sp-xs);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .delete-btn:hover {
+    color: var(--color-error);
+  }
+  .request-row:hover .delete-btn {
+    visibility: visible;
   }
 </style>
