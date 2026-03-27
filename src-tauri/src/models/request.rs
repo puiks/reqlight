@@ -98,6 +98,23 @@ pub enum RequestBody {
     Json(String),
     FormData(Vec<KeyValuePair>),
     RawText(String),
+    Multipart(Vec<MultipartField>),
+}
+
+/// A single field in a multipart form.
+/// If `file_path` is Some, the field is a file upload; otherwise text.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MultipartField {
+    #[serde(default = "Uuid::new_v4")]
+    pub id: Uuid,
+    pub name: String,
+    #[serde(default)]
+    pub value: String,
+    #[serde(default)]
+    pub file_path: Option<String>,
+    #[serde(default = "default_true")]
+    pub is_enabled: bool,
 }
 
 // Custom Serialize to match Swift's auto-synthesized Codable format
@@ -117,6 +134,9 @@ impl Serialize for RequestBody {
             }
             RequestBody::RawText(s) => {
                 map.serialize_entry("rawText", &serde_json::json!({"_0": s}))?;
+            }
+            RequestBody::Multipart(fields) => {
+                map.serialize_entry("multipart", &serde_json::json!({"_0": fields}))?;
             }
         }
         map.end()
@@ -152,6 +172,12 @@ impl<'de> Deserialize<'de> for RequestBody {
                 .unwrap_or("")
                 .to_string();
             Ok(RequestBody::RawText(s))
+        } else if let Some(inner) = obj.get("multipart") {
+            let fields: Vec<MultipartField> = inner
+                .get("_0")
+                .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+                .unwrap_or_default();
+            Ok(RequestBody::Multipart(fields))
         } else {
             Ok(RequestBody::None)
         }

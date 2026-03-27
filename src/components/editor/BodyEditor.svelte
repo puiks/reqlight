@@ -1,6 +1,7 @@
 <script lang="ts">
   import { editorStore } from "../../lib/stores/editor.svelte";
   import KeyValueEditor from "./KeyValueEditor.svelte";
+  import MultipartEditor from "./MultipartEditor.svelte";
   import { validateJson } from "../../lib/utils/json-highlighter";
   import type { BodyType } from "../../lib/types";
 
@@ -8,6 +9,7 @@
     { value: "none", label: "None" },
     { value: "json", label: "JSON" },
     { value: "formData", label: "Form Data" },
+    { value: "multipart", label: "Multipart" },
     { value: "rawText", label: "Raw Text" },
   ];
 
@@ -55,6 +57,10 @@
     {:else if editorStore.bodyType === "formData"}
       <KeyValueEditor
         bind:pairs={editorStore.formPairs}
+        onchange={() => editorStore.markDirty()}
+      />
+    {:else if editorStore.bodyType === "multipart"}
+      <MultipartEditor
         onchange={() => editorStore.markDirty()}
       />
     {:else if editorStore.bodyType === "rawText"}

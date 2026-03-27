@@ -117,6 +117,23 @@ pub fn export(request: &SavedRequest, environment: Option<&RequestEnvironment>) 
                 .join("&");
             parts.push(format!("-d '{}'", shell_escape(&encoded)));
         }
+        RequestBody::Multipart(fields) => {
+            for field in fields.iter().filter(|f| f.is_enabled && !f.name.is_empty()) {
+                if let Some(ref path) = field.file_path {
+                    parts.push(format!(
+                        "-F '{}=@{}'",
+                        shell_escape(&field.name),
+                        shell_escape(path)
+                    ));
+                } else {
+                    parts.push(format!(
+                        "-F '{}={}'",
+                        shell_escape(&field.name),
+                        shell_escape(&field.value)
+                    ));
+                }
+            }
+        }
         RequestBody::None => {}
     }
 

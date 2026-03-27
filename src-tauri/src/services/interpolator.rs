@@ -102,6 +102,18 @@ pub fn interpolate_request(
                 })
                 .collect(),
         ),
+        RequestBody::Multipart(fields) => RequestBody::Multipart(
+            fields
+                .iter()
+                .map(|f| crate::models::MultipartField {
+                    id: f.id,
+                    name: interpolate(&f.name, variables),
+                    value: interpolate(&f.value, variables),
+                    file_path: f.file_path.as_ref().map(|p| interpolate(p, variables)),
+                    is_enabled: f.is_enabled,
+                })
+                .collect(),
+        ),
         RequestBody::None => RequestBody::None,
     };
 
