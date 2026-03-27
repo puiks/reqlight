@@ -211,6 +211,8 @@ class EditorStore {
         url: this.url,
         statusCode: result.statusCode,
         elapsedTime: result.elapsedTime,
+        requestId: this.requestId ?? null,
+        requestName: this.name || null,
         snapshot: this.toSavedRequest() ?? undefined,
       });
     } catch (e) {

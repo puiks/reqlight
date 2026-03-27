@@ -119,9 +119,9 @@
     background: var(--bg-hover);
   }
   .chevron {
-    font-size: 10px;
+    font-size: var(--fs-small);
     color: var(--text-secondary);
-    width: 12px;
+    width: 14px;
     text-align: center;
   }
   .name {
@@ -136,17 +136,18 @@
     font-weight: 400;
   }
   .delete-btn {
-    display: none;
-    font-size: var(--fs-caption);
+    visibility: hidden;
+    font-size: var(--fs-body);
     color: var(--text-tertiary);
     padding: 0 var(--sp-xs);
     line-height: 1;
+    flex-shrink: 0;
   }
   .delete-btn:hover {
     color: var(--color-error);
   }
   .header:hover .delete-btn {
-    display: block;
+    visibility: visible;
   }
   .requests {
     padding-left: var(--sp-xs);

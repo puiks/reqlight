@@ -70,6 +70,10 @@ export interface RequestHistoryEntry {
   statusCode: number | null;
   timestamp: string;
   elapsedTime: number | null;
+  /** ID of the saved request this was sent from (null if detached) */
+  requestId?: string | null;
+  /** Name of the request at time of send */
+  requestName?: string | null;
   /** Full request snapshot for replay (frontend-only, not persisted to Rust) */
   snapshot?: SavedRequest;
 }

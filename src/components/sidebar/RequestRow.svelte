@@ -60,16 +60,17 @@
     flex: 1;
   }
   .delete-btn {
-    display: none;
-    font-size: var(--fs-caption);
+    visibility: hidden;
+    font-size: var(--fs-body);
     color: var(--text-tertiary);
     padding: 0 var(--sp-xs);
     line-height: 1;
+    flex-shrink: 0;
   }
   .delete-btn:hover {
     color: var(--color-error);
   }
   .request-row:hover .delete-btn {
-    display: block;
+    visibility: visible;
   }
 </style>
