@@ -499,10 +499,7 @@ mod tests {
             .create_async()
             .await;
 
-        let pairs = vec![
-            make_kv("name", "John"),
-            make_kv("age", "30"),
-        ];
+        let pairs = vec![make_kv("name", "John"), make_kv("age", "30")];
 
         execute(
             &test_client(),

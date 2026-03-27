@@ -24,9 +24,7 @@ pub enum WsEventType {
 }
 
 type WsSender = futures_util::stream::SplitSink<
-    tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
-    >,
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
     Message,
 >;
 
@@ -164,9 +162,7 @@ mod tests {
 
     /// Start a simple echo WebSocket server on a random port.
     async fn start_echo_server() -> String {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-            .await
-            .unwrap();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let url = format!("ws://{addr}");
 
@@ -217,7 +213,9 @@ mod tests {
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
         let events = received.lock().await;
-        assert!(events.iter().any(|e| matches!(e.event_type, WsEventType::Connected)));
+        assert!(events
+            .iter()
+            .any(|e| matches!(e.event_type, WsEventType::Connected)));
         assert!(events
             .iter()
             .any(|e| matches!(e.event_type, WsEventType::Message)
