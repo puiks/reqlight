@@ -1,30 +1,134 @@
 <script lang="ts">
   import type { ResponseRecord } from "../../lib/types";
   import { formatJson, highlightJson } from "../../lib/utils/json-highlighter";
+  import { formatXml, highlightXml } from "../../lib/utils/xml-highlighter";
+  import { findMatches, highlightMatches } from "../../lib/utils/text-search";
 
   let { response }: { response: ResponseRecord } = $props();
 
+  type ContentCategory = "json" | "xml" | "html" | "image" | "text";
+
   let showFormatted = $state(true);
+  let searchQuery = $state("");
+  let searchVisible = $state(false);
+  let activeMatchIndex = $state(0);
+  let searchInputEl = $state<HTMLInputElement | null>(null);
+  let htmlPreviewMode = $state<"preview" | "source">("preview");
+
+  const contentCategory = $derived((): ContentCategory => {
+    const ct = (response.contentType ?? "").toLowerCase();
+    if (response.isJson || ct.includes("json")) return "json";
+    if (ct.includes("xml")) return "xml";
+    if (ct.includes("html")) return "html";
+    if (ct.startsWith("image/")) return "image";
+    return "text";
+  });
 
   const bodyText = $derived(response.bodyString ?? "(No body)");
-  const formattedJson = $derived(
-    response.isJson ? formatJson(bodyText) : bodyText,
-  );
-  const highlightedHtml = $derived(
-    response.isJson && showFormatted
-      ? highlightJson(formattedJson)
+
+  const displayText = $derived((): string => {
+    const cat = contentCategory();
+    if (!showFormatted) return bodyText;
+    if (cat === "json") return formatJson(bodyText);
+    if (cat === "xml") return formatXml(bodyText);
+    return bodyText;
+  });
+
+  const syntaxHtml = $derived((): string | null => {
+    if (!showFormatted || searchQuery) return null;
+    const cat = contentCategory();
+    if (cat === "json") return highlightJson(displayText());
+    if (cat === "xml") return highlightXml(displayText());
+    if (cat === "html" && htmlPreviewMode === "source") return highlightXml(bodyText);
+    return null;
+  });
+
+  const searchResults = $derived(findMatches(displayText(), searchQuery));
+
+  $effect(() => {
+    if (searchResults.length > 0 && activeMatchIndex >= searchResults.length) {
+      activeMatchIndex = 0;
+    }
+  });
+
+  const searchHighlightedHtml = $derived(
+    searchQuery && searchResults.length > 0
+      ? highlightMatches(displayText(), searchResults, activeMatchIndex)
       : null,
   );
 
+  // Build a data URL for image responses
+  const imageDataUrl = $derived((): string | null => {
+    if (contentCategory() !== "image" || !response.bodyString) return null;
+    const ct = response.contentType || "image/png";
+    // bodyString is raw text; for binary we'd need base64, but current impl
+    // passes text. If the backend sent base64 we'd use it here.
+    // For now, this works with SVG. For binary images, we'll need backend changes.
+    if (ct.includes("svg")) {
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(response.bodyString)}`;
+    }
+    return null;
+  });
+
+  const isFormattable = $derived((): boolean => {
+    const cat = contentCategory();
+    return cat === "json" || cat === "xml";
+  });
+
   function handleCopy() {
-    const text = showFormatted && response.isJson ? formattedJson : bodyText;
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(displayText());
+  }
+
+  function toggleSearch() {
+    searchVisible = !searchVisible;
+    if (!searchVisible) {
+      searchQuery = "";
+      activeMatchIndex = 0;
+    } else {
+      requestAnimationFrame(() => searchInputEl?.focus());
+    }
+  }
+
+  function handleSearchKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      toggleSearch();
+    } else if (e.key === "Enter") {
+      if (e.shiftKey) { prevMatch(); } else { nextMatch(); }
+    }
+  }
+
+  function nextMatch() {
+    if (searchResults.length === 0) return;
+    activeMatchIndex = (activeMatchIndex + 1) % searchResults.length;
+    scrollToActiveMatch();
+  }
+
+  function prevMatch() {
+    if (searchResults.length === 0) return;
+    activeMatchIndex = (activeMatchIndex - 1 + searchResults.length) % searchResults.length;
+    scrollToActiveMatch();
+  }
+
+  function scrollToActiveMatch() {
+    requestAnimationFrame(() => {
+      const el = document.querySelector(".search-match.active");
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+      e.preventDefault();
+      toggleSearch();
+    }
   }
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <div class="response-body">
   <div class="toolbar">
-    {#if response.isJson}
+    {#if isFormattable()}
       <button
         class="toggle"
         class:active={showFormatted}
@@ -33,10 +137,46 @@
         {showFormatted ? "Formatted" : "Raw"}
       </button>
     {/if}
+    {#if contentCategory() === "html"}
+      <button
+        class="toggle"
+        class:active={htmlPreviewMode === "preview"}
+        onclick={() => (htmlPreviewMode = htmlPreviewMode === "preview" ? "source" : "preview")}
+      >
+        {htmlPreviewMode === "preview" ? "Preview" : "Source"}
+      </button>
+    {/if}
+    <span class="content-type-badge">{contentCategory()}</span>
+    <button class="search-btn" onclick={toggleSearch} title="Search (⌘F)">
+      ⌕
+    </button>
     <button class="copy-btn" onclick={handleCopy} title="Copy response body">
       Copy
     </button>
   </div>
+
+  {#if searchVisible}
+    <div class="search-bar">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search in response..."
+        bind:value={searchQuery}
+        bind:this={searchInputEl}
+        onkeydown={handleSearchKeydown}
+        spellcheck="false"
+      />
+      {#if searchQuery}
+        <span class="search-count">
+          {searchResults.length > 0
+            ? `${activeMatchIndex + 1}/${searchResults.length}`
+            : "0 results"}
+        </span>
+        <button class="nav-btn" onclick={prevMatch} title="Previous (Shift+Enter)">▲</button>
+        <button class="nav-btn" onclick={nextMatch} title="Next (Enter)">▼</button>
+      {/if}
+    </div>
+  {/if}
 
   {#if response.isTruncated}
     <div class="truncation-warning">
@@ -45,10 +185,29 @@
   {/if}
 
   <div class="body-content">
-    {#if highlightedHtml}
-      <pre class="highlighted"><code>{@html highlightedHtml}</code></pre>
+    {#if contentCategory() === "image"}
+      {#if imageDataUrl()}
+        <div class="image-preview">
+          <img src={imageDataUrl()} alt="Response" />
+        </div>
+      {:else}
+        <div class="image-fallback">
+          <span class="text-secondary">Binary image ({response.contentType}) — {(response.bodySize / 1024).toFixed(1)} KB</span>
+        </div>
+      {/if}
+    {:else if contentCategory() === "html" && htmlPreviewMode === "preview"}
+      <iframe
+        class="html-preview"
+        srcdoc={bodyText}
+        sandbox=""
+        title="HTML Preview"
+      ></iframe>
+    {:else if searchHighlightedHtml}
+      <pre class="highlighted"><code>{@html searchHighlightedHtml}</code></pre>
+    {:else if syntaxHtml()}
+      <pre class="highlighted"><code>{@html syntaxHtml()}</code></pre>
     {:else}
-      <pre class="plain"><code>{bodyText}</code></pre>
+      <pre class="plain"><code>{displayText()}</code></pre>
     {/if}
   </div>
 </div>
@@ -76,10 +235,47 @@
     background: var(--bg-selected);
     color: var(--color-info);
   }
+  .content-type-badge {
+    font-size: var(--fs-caption);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .search-btn {
+    font-size: var(--fs-callout);
+    color: var(--text-secondary);
+    padding: 0 var(--sp-xs);
+  }
   .copy-btn {
     font-size: var(--fs-caption);
     color: var(--text-secondary);
     margin-left: auto;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+    padding: var(--sp-xs) var(--sp-md);
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+  }
+  .search-input {
+    flex: 1;
+    font-size: var(--fs-small);
+    padding: 2px var(--sp-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+  }
+  .search-count {
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .nav-btn {
+    font-size: var(--fs-caption);
+    padding: 0 2px;
+    color: var(--text-secondary);
   }
   .body-content {
     flex: 1;
@@ -102,5 +298,43 @@
     font-size: var(--fs-caption);
     font-weight: 600;
     border-bottom: 1px solid var(--border-light);
+  }
+  .html-preview {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+    border-radius: var(--radius-sm);
+  }
+  .image-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: var(--sp-md);
+  }
+  .image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .image-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    font-size: var(--fs-small);
+  }
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  :global(.search-match) {
+    background: rgba(245, 158, 11, 0.3);
+    border-radius: 1px;
+  }
+  :global(.search-match.active) {
+    background: rgba(245, 158, 11, 0.7);
+    outline: 1px solid var(--color-warning);
   }
 </style>
