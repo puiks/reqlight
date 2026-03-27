@@ -35,15 +35,25 @@
     class:invalid={!editorStore.isUrlValid}
   />
 
-  <div class="timeout-group" title="Request timeout (seconds)">
-    <input
-      type="number"
-      class="timeout-input"
-      min="1"
-      max="300"
-      bind:value={editorStore.timeoutSecs}
-    />
-    <span class="timeout-label">s</span>
+  <div class="options-group">
+    <div class="timeout-group" title="Request timeout (seconds)">
+      <input
+        type="number"
+        class="timeout-input"
+        min="1"
+        max="300"
+        bind:value={editorStore.timeoutSecs}
+      />
+      <span class="timeout-label">s</span>
+    </div>
+    <button
+      class="redirect-toggle"
+      class:active={editorStore.followRedirects}
+      title={editorStore.followRedirects ? "Following redirects (click to disable)" : "Not following redirects (click to enable)"}
+      onclick={() => (editorStore.followRedirects = !editorStore.followRedirects)}
+    >
+      {editorStore.followRedirects ? "3xx→" : "3xx✕"}
+    </button>
   </div>
 
   {#if editorStore.isLoading}
@@ -108,6 +118,11 @@
     padding: var(--sp-xs) var(--sp-lg);
     border-radius: var(--radius-sm);
   }
+  .options-group {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+  }
   .timeout-group {
     display: flex;
     align-items: center;
@@ -129,5 +144,16 @@
   .timeout-label {
     font-size: var(--fs-caption);
     color: var(--text-tertiary);
+  }
+  .redirect-toggle {
+    font-size: var(--fs-caption);
+    font-family: var(--font-mono);
+    padding: var(--sp-xs) var(--sp-xs);
+    color: var(--text-tertiary);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+  .redirect-toggle.active {
+    color: var(--color-info);
   }
 </style>
