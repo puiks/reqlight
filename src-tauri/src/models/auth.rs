@@ -50,6 +50,17 @@ pub enum AuthConfig {
         value: String,
         location: ApiKeyLocation,
     },
+    OAuth2 {
+        grant_type: String, // "authorization_code" or "client_credentials"
+        client_id: String,
+        client_secret: String,
+        auth_url: String,
+        token_url: String,
+        scopes: String,
+        access_token: String,
+        refresh_token: String,
+        token_expiry: Option<String>, // ISO8601
+    },
 }
 
 impl Serialize for AuthConfig {
@@ -81,6 +92,32 @@ impl Serialize for AuthConfig {
                 map.serialize_entry(
                     "apiKey",
                     &serde_json::json!({"_0": {"key": key, "value": value, "location": loc_str}}),
+                )?;
+            }
+            AuthConfig::OAuth2 {
+                grant_type,
+                client_id,
+                client_secret,
+                auth_url,
+                token_url,
+                scopes,
+                access_token,
+                refresh_token,
+                token_expiry,
+            } => {
+                map.serialize_entry(
+                    "oauth2",
+                    &serde_json::json!({
+                        "grantType": grant_type,
+                        "clientId": client_id,
+                        "clientSecret": client_secret,
+                        "authUrl": auth_url,
+                        "tokenUrl": token_url,
+                        "scopes": scopes,
+                        "accessToken": access_token,
+                        "refreshToken": refresh_token,
+                        "tokenExpiry": token_expiry,
+                    }),
                 )?;
             }
         }
@@ -142,6 +179,28 @@ impl<'de> Deserialize<'de> for AuthConfig {
                 key,
                 value,
                 location,
+            })
+        } else if let Some(inner) = obj.get("oauth2") {
+            let s = |key: &str| -> String {
+                inner
+                    .get(key)
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string()
+            };
+            Ok(AuthConfig::OAuth2 {
+                grant_type: s("grantType"),
+                client_id: s("clientId"),
+                client_secret: s("clientSecret"),
+                auth_url: s("authUrl"),
+                token_url: s("tokenUrl"),
+                scopes: s("scopes"),
+                access_token: s("accessToken"),
+                refresh_token: s("refreshToken"),
+                token_expiry: inner
+                    .get("tokenExpiry")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
             })
         } else {
             Ok(AuthConfig::None)
@@ -215,6 +274,26 @@ mod tests {
         let json = r#"{"none":{}}"#;
         let parsed: AuthConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed, AuthConfig::None);
+    }
+
+    #[test]
+    fn serde_oauth2_roundtrip() {
+        let auth = AuthConfig::OAuth2 {
+            grant_type: "authorization_code".to_string(),
+            client_id: "my-app".to_string(),
+            client_secret: "secret123".to_string(),
+            auth_url: "https://auth.example.com/authorize".to_string(),
+            token_url: "https://auth.example.com/token".to_string(),
+            scopes: "read write".to_string(),
+            access_token: "tok_abc".to_string(),
+            refresh_token: "ref_xyz".to_string(),
+            token_expiry: Some("2026-04-01T00:00:00Z".to_string()),
+        };
+        let json = serde_json::to_string(&auth).unwrap();
+        assert!(json.contains("oauth2"));
+        assert!(json.contains("grantType"));
+        let parsed: AuthConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, auth);
     }
 
     #[test]
