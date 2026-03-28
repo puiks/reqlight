@@ -1,11 +1,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::constants::DATA_FILE_NAME;
 use crate::models::auth::AuthConfig;
 use crate::models::AppState;
 use crate::services::keychain;
-
-const DATA_FILE_NAME: &str = "data.json";
 
 /// Get the data directory path.
 /// On macOS: ~/Library/Application Support/Reqlight/

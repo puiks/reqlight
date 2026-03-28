@@ -1,4 +1,5 @@
 mod commands;
+mod constants;
 mod error;
 mod models;
 mod services;
@@ -36,15 +37,15 @@ fn init_logging() {
 fn dirs_next() -> Option<std::path::PathBuf> {
     #[cfg(target_os = "macos")]
     {
-        dirs::home_dir().map(|h| h.join("Library/Logs/Reqlight"))
+        dirs::home_dir().map(|h| h.join(format!("Library/Logs/{}", constants::APP_NAME)))
     }
     #[cfg(target_os = "windows")]
     {
-        dirs::data_local_dir().map(|d| d.join("Reqlight/logs"))
+        dirs::data_local_dir().map(|d| d.join(format!("{}/logs", constants::APP_NAME)))
     }
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
-        dirs::data_dir().map(|d| d.join("reqlight/logs"))
+        dirs::data_dir().map(|d| d.join(format!("{}/logs", constants::APP_NAME.to_lowercase())))
     }
 }
 

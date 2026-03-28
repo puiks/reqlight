@@ -1,3 +1,4 @@
+use crate::constants::OAUTH_CALLBACK_TIMEOUT_SECS;
 use crate::services::oauth;
 use crate::SharedHttpClient;
 use serde::{Deserialize, Serialize};
@@ -126,10 +127,15 @@ pub async fn oauth_authorization_code(
             Ok::<String, String>(result.code)
         };
 
-        let code = tokio::time::timeout(std::time::Duration::from_secs(120), accept_future)
-            .await
-            .map_err(|_| "Authorization timed out (120s). Please try again.".to_string())?
-            .map_err(|e: String| e)?;
+        let code = tokio::time::timeout(
+            std::time::Duration::from_secs(OAUTH_CALLBACK_TIMEOUT_SECS),
+            accept_future,
+        )
+        .await
+        .map_err(|_| {
+            format!("Authorization timed out ({OAUTH_CALLBACK_TIMEOUT_SECS}s). Please try again.")
+        })?
+        .map_err(|e: String| e)?;
 
         (redirect_uri, code)
     };

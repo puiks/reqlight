@@ -3,15 +3,12 @@ use std::time::{Duration, Instant};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
+use crate::constants::{DEFAULT_TIMEOUT_SECS, MAX_RESPONSE_BODY_BYTES};
 use crate::error::AppError;
 use crate::models::{
     ApiKeyLocation, AuthConfig, HeaderPair, HttpMethod, KeyValuePair, ProxyConfig, RequestBody,
     ResponseRecord,
 };
-
-const DEFAULT_TIMEOUT_SECS: u64 = 30;
-/// Max response body size we'll read into memory (5 MB)
-const MAX_RESPONSE_BODY_BYTES: usize = 5 * 1024 * 1024;
 
 /// Parse URL and append enabled query parameters.
 fn build_url(url: &str, query_params: &[KeyValuePair]) -> Result<reqwest::Url, AppError> {
