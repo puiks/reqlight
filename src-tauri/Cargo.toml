@@ -25,6 +25,7 @@ url = "2"
 serde_yaml = "0.9"
 urlencoding = "2"
 base64 = "0.22"
+sha2 = "0.10"
 open = "5"
 
 [dev-dependencies]
