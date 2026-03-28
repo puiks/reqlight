@@ -1,19 +1,49 @@
-use tauri::{AppHandle, Emitter, State};
-
+use crate::models::{KeyValuePair, RequestEnvironment};
+use crate::services::interpolator;
 use crate::services::websocket::WsManager;
+use tauri::{AppHandle, Emitter, State};
 
 #[tauri::command]
 pub async fn ws_connect(
     connection_id: String,
     url: String,
-    app_handle: AppHandle,
+    headers: Option<Vec<KeyValuePair>>,
+    environment: Option<RequestEnvironment>,
     ws_manager: State<'_, WsManager>,
+    app_handle: AppHandle,
 ) -> Result<(), String> {
+    // Interpolate URL and headers with environment variables
+    let (final_url, final_headers) = if let Some(env) = &environment {
+        let u = interpolator::interpolate(&url, &env.variables);
+        let h = headers
+            .unwrap_or_default()
+            .iter()
+            .filter(|h| h.is_enabled && !h.key.is_empty())
+            .map(|h| {
+                (
+                    interpolator::interpolate(&h.key, &env.variables),
+                    interpolator::interpolate(&h.value, &env.variables),
+                )
+            })
+            .collect::<Vec<_>>();
+        (u, h)
+    } else {
+        let h = headers
+            .unwrap_or_default()
+            .iter()
+            .filter(|h| h.is_enabled && !h.key.is_empty())
+            .map(|h| (h.key.clone(), h.value.clone()))
+            .collect::<Vec<_>>();
+        (url, h)
+    };
+
     let emit = move |event| {
         let _ = app_handle.emit("ws-event", event);
     };
 
-    ws_manager.connect(connection_id, &url, emit).await
+    ws_manager
+        .connect(connection_id, &final_url, &final_headers, emit)
+        .await
 }
 
 #[tauri::command]

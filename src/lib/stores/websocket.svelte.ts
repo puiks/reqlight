@@ -1,15 +1,24 @@
 import { wsConnect, wsDisconnect, wsSend } from "../commands";
-import type { ConnectionStatus, WsEvent, WsMessage } from "../types";
+import { createEmptyPair, type ConnectionStatus, type KeyValuePair, type WsEvent, type WsMessage } from "../types";
 import { handleError } from "../utils/errors";
+import { environmentStore } from "./environment.svelte";
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 1000; // 1s
 
 class WebSocketStore {
   connectionId = $state<string | null>(null);
   url = $state("");
+  headers = $state<KeyValuePair[]>([createEmptyPair()]);
   status = $state<ConnectionStatus>("disconnected");
   messages = $state<WsMessage[]>([]);
   messageInput = $state("");
+  autoReconnect = $state(false);
 
   private unlistenFn: (() => void) | null = null;
+  private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private userDisconnected = false;
 
   get isConnected(): boolean {
     return this.status === "connected";
@@ -26,11 +35,18 @@ class WebSocketStore {
     this.connectionId = id;
     this.status = "connecting";
     this.messages = [];
+    this.userDisconnected = false;
+    this.reconnectAttempts = 0;
 
     try {
-      // Listen for Tauri events before connecting
       await this.startListening();
-      await wsConnect(id, this.url);
+      const enabledHeaders = this.headers.filter((h) => h.isEnabled && h.key.trim());
+      await wsConnect(
+        id,
+        this.url,
+        enabledHeaders.length > 0 ? enabledHeaders : undefined,
+        environmentStore.activeEnvironment ?? undefined,
+      );
     } catch (e) {
       this.status = "disconnected";
       this.connectionId = null;
@@ -58,12 +74,14 @@ class WebSocketStore {
   }
 
   async disconnect() {
+    this.userDisconnected = true;
+    this.cancelReconnect();
+
     if (!this.connectionId) return;
 
     try {
       await wsDisconnect(this.connectionId);
     } catch (e) {
-      // Connection may already be closed
       handleError(e, "ws.disconnect", { silent: true });
     }
     this.cleanup();
@@ -75,6 +93,7 @@ class WebSocketStore {
     switch (event.event_type) {
       case "connected":
         this.status = "connected";
+        this.reconnectAttempts = 0;
         break;
       case "message":
         if (event.data) {
@@ -88,16 +107,60 @@ class WebSocketStore {
         break;
       case "disconnected":
         this.cleanup();
+        this.tryReconnect();
         break;
       case "error":
         handleError(event.data ?? "Unknown WebSocket error", "ws.event");
         this.cleanup();
+        this.tryReconnect();
         break;
     }
   }
 
+  private tryReconnect() {
+    if (
+      !this.autoReconnect ||
+      this.userDisconnected ||
+      this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS ||
+      !this.url.trim()
+    ) {
+      return;
+    }
+
+    this.reconnectAttempts++;
+    const delay = BASE_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts - 1);
+    this.status = "connecting";
+
+    this.reconnectTimer = setTimeout(async () => {
+      if (this.userDisconnected) return;
+
+      const id = crypto.randomUUID();
+      this.connectionId = id;
+
+      try {
+        await this.startListening();
+        const enabledHeaders = this.headers.filter((h) => h.isEnabled && h.key.trim());
+        await wsConnect(
+          id,
+          this.url,
+          enabledHeaders.length > 0 ? enabledHeaders : undefined,
+          environmentStore.activeEnvironment ?? undefined,
+        );
+      } catch {
+        this.cleanup();
+        this.tryReconnect();
+      }
+    }, delay);
+  }
+
+  private cancelReconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
   private async startListening() {
-    // Dynamically import to avoid issues in non-Tauri environments
     try {
       const { listen } = await import("@tauri-apps/api/event");
       this.unlistenFn = await listen<WsEvent>("ws-event", (e) => {
