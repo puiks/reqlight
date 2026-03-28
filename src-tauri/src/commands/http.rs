@@ -4,7 +4,8 @@ use tauri::State;
 use tokio::sync::Notify;
 
 use crate::models::{
-    AuthConfig, HttpMethod, KeyValuePair, RequestBody, RequestEnvironment, ResponseRecord,
+    AuthConfig, HttpMethod, KeyValuePair, ProxyConfig, RequestBody, RequestEnvironment,
+    ResponseRecord,
 };
 use crate::services::{http_client, interpolator};
 use crate::SharedHttpClient;
@@ -27,6 +28,7 @@ pub async fn send_request(
     timeout_secs: Option<u64>,
     follow_redirects: Option<bool>,
     environment: Option<RequestEnvironment>,
+    proxy_config: Option<ProxyConfig>,
     http_client_state: State<'_, SharedHttpClient>,
     canceller: State<'_, RequestCanceller>,
 ) -> Result<ResponseRecord, String> {
@@ -56,6 +58,7 @@ pub async fn send_request(
             &final_auth,
             timeout_secs,
             follow_redirects,
+            proxy_config.as_ref(),
         ) => result,
         _ = cancel.notified() => Err("Request cancelled".to_string()),
     }

@@ -21,4 +21,6 @@ pub struct AppState {
     pub last_selected_request_id: Option<Uuid>,
     #[serde(default)]
     pub history: Vec<RequestHistoryEntry>,
+    #[serde(default)]
+    pub proxy_config: super::proxy::ProxyConfig,
 }

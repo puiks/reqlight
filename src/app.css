@@ -6,6 +6,8 @@
   --color-method-put: #3b82f6;
   --color-method-patch: #a855f7;
   --color-method-delete: #ef4444;
+  --color-method-head: #06b6d4;
+  --color-method-options: #8b5cf6;
 
   /* Status colors */
   --color-success: #22c55e;

@@ -4,6 +4,7 @@ import {
   createEmptyBody,
   createEmptyPair,
   type AppState,
+  type ProxyConfig,
   type RequestCollection,
   type SavedRequest,
 } from "../types";
@@ -19,6 +20,7 @@ class AppStore {
   sidebarVisible = $state(true);
   searchQuery = $state("");
   isLoading = $state(false);
+  proxyConfig = $state<ProxyConfig>({ proxyUrl: "", noProxy: "", enabled: false });
 
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -85,6 +87,7 @@ class AppStore {
       // Mask secret values so they don't linger in reactive state
       environmentStore.maskSecrets();
       historyStore.history = state.history;
+      this.proxyConfig = state.proxyConfig ?? { proxyUrl: "", noProxy: "", enabled: false };
     } catch (e) {
       handleError(e, "AppStore.load", { silent: true });
     } finally {
@@ -114,6 +117,7 @@ class AppStore {
       lastSelectedCollectionId: this.selectedCollectionId,
       lastSelectedRequestId: this.selectedRequestId,
       history: historyStore.history,
+      proxyConfig: this.proxyConfig,
     };
     try {
       await saveState(state);

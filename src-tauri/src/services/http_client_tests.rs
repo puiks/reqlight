@@ -29,6 +29,7 @@ async fn get_request_returns_200() {
         &AuthConfig::None,
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -58,6 +59,7 @@ async fn post_json_auto_content_type() {
         &AuthConfig::None,
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -86,6 +88,7 @@ async fn query_params_appended_to_url() {
         &AuthConfig::None,
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -112,6 +115,7 @@ async fn custom_headers_sent() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await
@@ -141,6 +145,7 @@ async fn bearer_auth_injects_header() {
             token: "my-token".to_string(),
         },
         Some(5),
+        None,
         None,
     )
     .await
@@ -173,6 +178,7 @@ async fn basic_auth_injects_header() {
         },
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -201,6 +207,7 @@ async fn auth_does_not_override_manual_authorization() {
             token: "should-not-appear".to_string(),
         },
         Some(5),
+        None,
         None,
     )
     .await
@@ -233,6 +240,7 @@ async fn api_key_header_auth() {
         },
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -251,6 +259,7 @@ async fn invalid_url_returns_error() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await;
@@ -279,6 +288,7 @@ async fn json_response_detected() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await
@@ -311,6 +321,7 @@ async fn form_data_body_encoded_with_content_type() {
         &AuthConfig::None,
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -337,6 +348,7 @@ async fn raw_text_body_sent_without_auto_content_type() {
         &RequestBody::RawText("plain text body".to_string()),
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await
@@ -367,6 +379,7 @@ async fn large_response_truncated() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(30),
+        None,
         None,
     )
     .await
@@ -401,6 +414,7 @@ async fn timeout_returns_error() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(1),
+        None,
         None,
     )
     .await;
@@ -443,6 +457,7 @@ async fn api_key_query_location() {
         },
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -471,6 +486,7 @@ async fn disabled_params_and_headers_ignored() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await
@@ -501,6 +517,7 @@ async fn non_json_content_type_detected() {
         &AuthConfig::None,
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -530,6 +547,7 @@ async fn empty_bearer_token_not_injected() {
             token: "".to_string(),
         },
         Some(5),
+        None,
         None,
     )
     .await
@@ -571,6 +589,7 @@ async fn cookie_jar_persists_across_requests() {
         &AuthConfig::None,
         Some(5),
         None,
+        None,
     )
     .await
     .unwrap();
@@ -584,6 +603,7 @@ async fn cookie_jar_persists_across_requests() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await
@@ -613,6 +633,7 @@ async fn follow_redirects_disabled_returns_302() {
         &AuthConfig::None,
         Some(5),
         Some(false),
+        None,
     )
     .await
     .unwrap();
@@ -641,6 +662,7 @@ async fn content_type_returned_in_response() {
         &RequestBody::None,
         &AuthConfig::None,
         Some(5),
+        None,
         None,
     )
     .await

@@ -4,7 +4,8 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
 use crate::models::{
-    ApiKeyLocation, AuthConfig, HeaderPair, HttpMethod, KeyValuePair, RequestBody, ResponseRecord,
+    ApiKeyLocation, AuthConfig, HeaderPair, HttpMethod, KeyValuePair, ProxyConfig, RequestBody,
+    ResponseRecord,
 };
 
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
@@ -25,6 +26,7 @@ pub async fn execute(
     auth: &AuthConfig,
     timeout_secs: Option<u64>,
     follow_redirects: Option<bool>,
+    proxy_config: Option<&ProxyConfig>,
 ) -> Result<ResponseRecord, String> {
     // Build URL with query params
     let mut parsed_url = reqwest::Url::parse(url).map_err(|e| format!("Invalid URL: {e}"))?;
@@ -48,6 +50,8 @@ pub async fn execute(
         HttpMethod::Put => reqwest::Method::PUT,
         HttpMethod::Patch => reqwest::Method::PATCH,
         HttpMethod::Delete => reqwest::Method::DELETE,
+        HttpMethod::Head => reqwest::Method::HEAD,
+        HttpMethod::Options => reqwest::Method::OPTIONS,
     };
 
     // Set headers
@@ -95,19 +99,39 @@ pub async fn execute(
                 parsed_url.query_pairs_mut().append_pair(key, value);
             }
         },
+        AuthConfig::OAuth2 { access_token, .. } if !access_token.is_empty() => {
+            if !header_map.contains_key(reqwest::header::AUTHORIZATION) {
+                if let Ok(val) = HeaderValue::from_str(&format!("Bearer {access_token}")) {
+                    header_map.insert(reqwest::header::AUTHORIZATION, val);
+                }
+            }
+        }
         _ => {}
     }
 
-    // If redirects are disabled, build a temporary client with no-redirect policy.
-    // reqwest::Client is cheap to construct and redirect policy is per-client.
-    let no_redirect_client;
-    let effective_client = if follow_redirects == Some(false) {
-        no_redirect_client = reqwest::Client::builder()
-            .cookie_store(true)
-            .redirect(reqwest::redirect::Policy::none())
+    // Build a temporary client when proxy or no-redirect is needed.
+    let needs_custom_client = follow_redirects == Some(false)
+        || proxy_config.is_some_and(|p| p.enabled && !p.proxy_url.is_empty());
+    let custom_client;
+    let effective_client = if needs_custom_client {
+        let mut builder = reqwest::Client::builder().cookie_store(true);
+        if follow_redirects == Some(false) {
+            builder = builder.redirect(reqwest::redirect::Policy::none());
+        }
+        if let Some(proxy) = proxy_config.filter(|p| p.enabled && !p.proxy_url.is_empty()) {
+            let mut p = reqwest::Proxy::all(&proxy.proxy_url)
+                .map_err(|e| format!("Invalid proxy URL: {e}"))?;
+            if !proxy.no_proxy.is_empty() {
+                if let Some(no_proxy) = reqwest::NoProxy::from_string(&proxy.no_proxy) {
+                    p = p.no_proxy(Some(no_proxy));
+                }
+            }
+            builder = builder.proxy(p);
+        }
+        custom_client = builder
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
-        &no_redirect_client
+        &custom_client
     } else {
         client
     };
@@ -154,6 +178,25 @@ pub async fn execute(
         }
         RequestBody::RawText(text) => {
             request = request.body(text.clone());
+        }
+        RequestBody::GraphQL { query, variables } => {
+            if !header_map.contains_key(reqwest::header::CONTENT_TYPE) {
+                header_map.insert(
+                    reqwest::header::CONTENT_TYPE,
+                    HeaderValue::from_static("application/json"),
+                );
+            }
+            // Build the standard GraphQL JSON body: { "query": "...", "variables": {...} }
+            let vars_value: serde_json::Value = if variables.trim().is_empty() {
+                serde_json::Value::Null
+            } else {
+                serde_json::from_str(variables).unwrap_or(serde_json::Value::Null)
+            };
+            let gql_body = serde_json::json!({
+                "query": query,
+                "variables": vars_value,
+            });
+            request = request.body(gql_body.to_string());
         }
         RequestBody::Multipart(fields) => {
             is_multipart = true;
