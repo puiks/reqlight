@@ -1,12 +1,14 @@
 <script lang="ts">
   import { editorStore } from "../../lib/stores/editor.svelte";
   import type { AuthType, ApiKeyLocation } from "../../lib/types";
+  import OAuth2Editor from "./OAuth2Editor.svelte";
 
   const authTypes: { value: AuthType; label: string }[] = [
     { value: "none", label: "No Auth" },
     { value: "bearerToken", label: "Bearer Token" },
     { value: "basicAuth", label: "Basic Auth" },
     { value: "apiKey", label: "API Key" },
+    { value: "oauth2", label: "OAuth 2.0" },
   ];
 
   const apiKeyLocations: { value: ApiKeyLocation; label: string }[] = [
@@ -126,6 +128,8 @@
         {/each}
       </select>
     </div>
+  {:else if editorStore.authType === "oauth2"}
+    <OAuth2Editor />
   {:else}
     <p class="no-auth-hint">This request does not use any authentication.</p>
   {/if}

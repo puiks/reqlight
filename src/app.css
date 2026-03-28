@@ -6,6 +6,8 @@
   --color-method-put: #3b82f6;
   --color-method-patch: #a855f7;
   --color-method-delete: #ef4444;
+  --color-method-head: #06b6d4;
+  --color-method-options: #8b5cf6;
 
   /* Status colors */
   --color-success: #22c55e;
@@ -26,15 +28,26 @@
   --radius-lg: 8px;
 
   /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    "SF Mono", "Fira Code", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
   --fs-caption: 10px;
   --fs-footnote: 11px;
   --fs-small: 12px;
   --fs-body: 13px;
   --fs-callout: 14px;
+  --fs-title3: 18px;
+  --fs-title2: 24px;
+  --fs-icon-lg: 40px;
+
+  /* Shadows */
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Overlays */
+  --overlay-backdrop: rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Light Theme (default) ===== */

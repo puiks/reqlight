@@ -1,211 +1,218 @@
-import { sendRequest, cancelRequest } from "../commands";
+import { cancelRequest, sendRequest } from '../commands'
+import { DEFAULT_REQUEST_TIMEOUT } from '../constants'
 import {
-  buildAuthConfig,
-  buildRequestBody,
-  createEmptyAuth,
-  createEmptyMultipartField,
-  createEmptyPair,
-  getAuthType,
-  getBodyContent,
-  getBodyType,
-  getFormPairs,
-  getMultipartFields,
   type ApiKeyLocation,
   type AuthType,
   type BodyType,
+  buildAuthConfig,
+  buildRequestBody,
+  createEmptyExtractionRule,
+  createEmptyMultipartField,
+  createEmptyPair,
   type EditorTab,
+  type ExtractionRule,
+  getBodyContent,
+  getBodyType,
+  getFormPairs,
+  getGraphQLContent,
+  getMultipartFields,
   type HttpMethod,
   type KeyValuePair,
   type MultipartField,
+  type OAuthGrantType,
   type ResponseRecord,
   type ResponseTab,
   type SavedRequest,
-} from "../types";
-import { DEFAULT_REQUEST_TIMEOUT } from "../constants";
-import { appStore } from "./app.svelte";
-import { environmentStore } from "./environment.svelte";
-import { historyStore } from "./history.svelte";
+} from '../types'
+import { buildOAuth2ConfigFromFields, parseAuthConfig } from '../utils/auth-helpers'
+import { extractByPath } from '../utils/jsonpath'
+import { appStore } from './app.svelte'
+import { environmentStore } from './environment.svelte'
+import { historyStore } from './history.svelte'
 
 class EditorStore {
   // Request fields
-  requestId = $state<string | null>(null);
-  name = $state("New Request");
-  method = $state<HttpMethod>("GET");
-  url = $state("");
-  queryParams = $state<KeyValuePair[]>([createEmptyPair()]);
-  headers = $state<KeyValuePair[]>([createEmptyPair()]);
-  bodyType = $state<BodyType>("none");
-  jsonBody = $state("");
-  rawBody = $state("");
-  formPairs = $state<KeyValuePair[]>([createEmptyPair()]);
-  multipartFields = $state<MultipartField[]>([createEmptyMultipartField()]);
+  requestId = $state<string | null>(null)
+  name = $state('New Request')
+  method = $state<HttpMethod>('GET')
+  url = $state('')
+  queryParams = $state<KeyValuePair[]>([createEmptyPair()])
+  headers = $state<KeyValuePair[]>([createEmptyPair()])
+  bodyType = $state<BodyType>('none')
+  jsonBody = $state('')
+  rawBody = $state('')
+  formPairs = $state<KeyValuePair[]>([createEmptyPair()])
+  multipartFields = $state<MultipartField[]>([createEmptyMultipartField()])
+  graphqlQuery = $state('')
+  graphqlVariables = $state('')
+  extractionRules = $state<ExtractionRule[]>([createEmptyExtractionRule()])
 
   // Auth fields
-  authType = $state<AuthType>("none");
-  bearerToken = $state("");
-  basicUsername = $state("");
-  basicPassword = $state("");
-  apiKeyKey = $state("");
-  apiKeyValue = $state("");
-  apiKeyLocation = $state<ApiKeyLocation>("header");
+  authType = $state<AuthType>('none')
+  bearerToken = $state('')
+  basicUsername = $state('')
+  basicPassword = $state('')
+  apiKeyKey = $state('')
+  apiKeyValue = $state('')
+  apiKeyLocation = $state<ApiKeyLocation>('header')
+  oauthGrantType = $state<OAuthGrantType>('client_credentials')
+  oauthClientId = $state('')
+  oauthClientSecret = $state('')
+  oauthAuthUrl = $state('')
+  oauthTokenUrl = $state('')
+  oauthScopes = $state('')
+  oauthAccessToken = $state('')
+  oauthRefreshToken = $state('')
+  oauthTokenExpiry = $state<string | null>(null)
 
   // UI state
-  activeEditorTab = $state<EditorTab>("params");
-  activeResponseTab = $state<ResponseTab>("body");
-  response = $state<ResponseRecord | null>(null);
-  isLoading = $state(false);
-  errorMessage = $state<string | null>(null);
-  isDirty = $state(false);
-  timeoutSecs = $state(DEFAULT_REQUEST_TIMEOUT);
-  followRedirects = $state(true);
-  protocolMode = $state<"http" | "ws">("http");
+  activeEditorTab = $state<EditorTab>('params')
+  activeResponseTab = $state<ResponseTab>('body')
+  response = $state<ResponseRecord | null>(null)
+  pinnedResponse = $state<ResponseRecord | null>(null)
+  isLoading = $state(false)
+  errorMessage = $state<string | null>(null)
+  isDirty = $state(false)
+  timeoutSecs = $state(DEFAULT_REQUEST_TIMEOUT)
+  followRedirects = $state(true)
+  protocolMode = $state<'http' | 'ws'>('http')
 
-  // Derived
   get isUrlValid(): boolean {
-    const u = this.url.trim();
-    if (!u) return true; // empty is ok (just can't send)
-    if (u.includes("{{")) return true; // allow variables
+    const u = this.url.trim()
+    if (!u) return true
+    if (u.includes('{{')) return true
     try {
-      new URL(u);
-      return true;
+      new URL(u)
+      return true
     } catch {
-      return u.startsWith("http://") || u.startsWith("https://");
+      return u.startsWith('http://') || u.startsWith('https://')
     }
   }
 
   get canSend(): boolean {
-    return this.url.trim().length > 0 && !this.isLoading;
+    return this.url.trim().length > 0 && !this.isLoading
   }
 
-  // Load from a saved request
   loadFrom(request: SavedRequest) {
-    this.saveIfDirty();
-    this.requestId = request.id;
-    this.name = request.name;
-    this.method = request.method;
-    this.url = request.url;
-    this.queryParams = request.queryParams.length
-      ? [...request.queryParams]
-      : [createEmptyPair()];
-    this.headers = request.headers.length
-      ? [...request.headers]
-      : [createEmptyPair()];
-    this.bodyType = getBodyType(request.body);
-    this.jsonBody = getBodyContent(request.body);
+    this.saveIfDirty()
+    this.requestId = request.id
+    this.name = request.name
+    this.method = request.method
+    this.url = request.url
+    this.queryParams = request.queryParams.length ? [...request.queryParams] : [createEmptyPair()]
+    this.headers = request.headers.length ? [...request.headers] : [createEmptyPair()]
+    this.bodyType = getBodyType(request.body)
+    this.jsonBody = getBodyContent(request.body)
     this.rawBody =
-      "rawText" in request.body ? request.body.rawText._0 : "";
+      typeof request.body === 'object' && 'rawText' in request.body ? request.body.rawText : ''
     this.formPairs = getFormPairs(request.body).length
       ? [...getFormPairs(request.body)]
-      : [createEmptyPair()];
+      : [createEmptyPair()]
     this.multipartFields = getMultipartFields(request.body).length
       ? [...getMultipartFields(request.body)]
-      : [createEmptyMultipartField()];
-    this.loadAuth(request.auth);
-    this.response = null;
-    this.errorMessage = null;
-    this.isDirty = false;
+      : [createEmptyMultipartField()]
+    const gql = getGraphQLContent(request.body)
+    this.graphqlQuery = gql.query
+    this.graphqlVariables = gql.variables
+    this.extractionRules = request.responseExtractions?.length
+      ? [...request.responseExtractions]
+      : [createEmptyExtractionRule()]
+    this.applyAuthFields(parseAuthConfig(request.auth))
+    this.response = null
+    this.errorMessage = null
+    this.isDirty = false
   }
 
-  private loadAuth(auth?: import("../types").AuthConfig) {
-    this.authType = getAuthType(auth);
-    this.bearerToken = "";
-    this.basicUsername = "";
-    this.basicPassword = "";
-    this.apiKeyKey = "";
-    this.apiKeyValue = "";
-    this.apiKeyLocation = "header";
-    if (auth && "bearerToken" in auth) {
-      this.bearerToken = auth.bearerToken._0.token;
-    } else if (auth && "basicAuth" in auth) {
-      this.basicUsername = auth.basicAuth._0.username;
-      this.basicPassword = auth.basicAuth._0.password;
-    } else if (auth && "apiKey" in auth) {
-      this.apiKeyKey = auth.apiKey._0.key;
-      this.apiKeyValue = auth.apiKey._0.value;
-      this.apiKeyLocation = auth.apiKey._0.location;
-    }
+  private applyAuthFields(fields: import('../utils/auth-helpers').AuthFields) {
+    this.authType = fields.authType
+    this.bearerToken = fields.bearerToken
+    this.basicUsername = fields.basicUsername
+    this.basicPassword = fields.basicPassword
+    this.apiKeyKey = fields.apiKeyKey
+    this.apiKeyValue = fields.apiKeyValue
+    this.apiKeyLocation = fields.apiKeyLocation
+    this.oauthGrantType = fields.oauthGrantType
+    this.oauthClientId = fields.oauthClientId
+    this.oauthClientSecret = fields.oauthClientSecret
+    this.oauthAuthUrl = fields.oauthAuthUrl
+    this.oauthTokenUrl = fields.oauthTokenUrl
+    this.oauthScopes = fields.oauthScopes
+    this.oauthAccessToken = fields.oauthAccessToken
+    this.oauthRefreshToken = fields.oauthRefreshToken
+    this.oauthTokenExpiry = fields.oauthTokenExpiry
   }
 
-  // Build a SavedRequest from current editor state
+  private currentBody(filterEmpty = false) {
+    const gql = { query: this.graphqlQuery, variables: this.graphqlVariables }
+    const formPairs = filterEmpty ? this.formPairs.filter((p) => p.key || p.value) : this.formPairs
+    const multipart = filterEmpty
+      ? this.multipartFields.filter((f) => f.name)
+      : this.multipartFields
+    return buildRequestBody(this.bodyType, this.jsonBody, this.rawBody, formPairs, multipart, gql)
+  }
+
+  private currentAuth() {
+    return buildAuthConfig(
+      this.authType,
+      { token: this.bearerToken },
+      { username: this.basicUsername, password: this.basicPassword },
+      { key: this.apiKeyKey, value: this.apiKeyValue, location: this.apiKeyLocation },
+      buildOAuth2ConfigFromFields(this),
+    )
+  }
+
   toSavedRequest(): SavedRequest | null {
-    if (!this.requestId) return null;
+    if (!this.requestId) return null
     return {
       id: this.requestId,
       name: this.name,
       method: this.method,
       url: this.url,
-      queryParams: this.queryParams.filter((p) => !p.key && !p.value ? false : true),
-      headers: this.headers.filter((p) => !p.key && !p.value ? false : true),
-      body: buildRequestBody(
-        this.bodyType,
-        this.jsonBody,
-        this.rawBody,
-        this.formPairs.filter((p) => !p.key && !p.value ? false : true),
-        this.multipartFields.filter((f) => !f.name ? false : true),
-      ),
-      auth: buildAuthConfig(
-        this.authType,
-        { token: this.bearerToken },
-        { username: this.basicUsername, password: this.basicPassword },
-        { key: this.apiKeyKey, value: this.apiKeyValue, location: this.apiKeyLocation },
-      ),
+      queryParams: this.queryParams.filter((p) => p.key || p.value),
+      headers: this.headers.filter((p) => p.key || p.value),
+      body: this.currentBody(true),
+      auth: this.currentAuth(),
       sortOrder: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    };
+      responseExtractions: this.extractionRules.filter((r) => r.variableName || r.jsonPath),
+    }
   }
 
-  // Save current editor state to the store
   saveIfDirty() {
-    if (!this.isDirty || !this.requestId) return;
-    const request = this.toSavedRequest();
+    if (!this.isDirty || !this.requestId) return
+    const request = this.toSavedRequest()
     if (request) {
-      appStore.updateRequest(request);
-      this.isDirty = false;
+      appStore.updateRequest(request)
+      this.isDirty = false
     }
   }
 
   markDirty() {
-    this.isDirty = true;
+    this.isDirty = true
   }
 
-  // Send the current request
   async send() {
-    if (!this.canSend) return;
-
-    // Synchronously set loading to prevent double-send from rapid clicks
-    this.isLoading = true;
-    this.errorMessage = null;
-    this.response = null;
-
+    if (!this.canSend) return
+    this.isLoading = true
+    this.errorMessage = null
+    this.response = null
     try {
-      const body = buildRequestBody(
-        this.bodyType,
-        this.jsonBody,
-        this.rawBody,
-        this.formPairs,
-        this.multipartFields,
-      );
-      const auth = buildAuthConfig(
-        this.authType,
-        { token: this.bearerToken },
-        { username: this.basicUsername, password: this.basicPassword },
-        { key: this.apiKeyKey, value: this.apiKeyValue, location: this.apiKeyLocation },
-      );
       const result = await sendRequest({
         method: this.method,
         url: this.url,
         headers: this.headers,
         queryParams: this.queryParams,
-        body,
-        auth,
+        body: this.currentBody(),
+        auth: this.currentAuth(),
         timeoutSecs: this.timeoutSecs,
         followRedirects: this.followRedirects,
         environment: environmentStore.activeEnvironment,
-      });
-      this.response = result;
+        proxyConfig: appStore.proxyConfig.enabled ? appStore.proxyConfig : undefined,
+      })
+      this.response = result
+      this.applyExtractions(result)
 
-      // Add to history with full request snapshot for replay
       historyStore.addEntry({
         method: this.method,
         url: this.url,
@@ -214,50 +221,99 @@ class EditorStore {
         requestId: this.requestId ?? null,
         requestName: this.name || null,
         snapshot: this.toSavedRequest() ?? undefined,
-      });
+      })
     } catch (e) {
-      this.errorMessage =
-        e instanceof Error ? e.message : String(e);
+      this.errorMessage = e instanceof Error ? e.message : String(e)
     } finally {
-      this.isLoading = false;
+      this.isLoading = false
     }
   }
 
-  // Cancel the in-flight request via Rust-side Notify
   async cancel() {
-    if (!this.isLoading) return;
+    if (!this.isLoading) return
     try {
-      await cancelRequest();
+      await cancelRequest()
     } catch {
       // best-effort
     }
-    this.isLoading = false;
+    this.isLoading = false
   }
 
-  // Reset to empty
+  private applyExtractions(response: ResponseRecord) {
+    if (!response.bodyString || !response.isJson) return
+    const enabledRules = this.extractionRules.filter(
+      (r) => r.isEnabled && r.variableName && r.jsonPath,
+    )
+    if (enabledRules.length === 0) return
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(response.bodyString)
+    } catch {
+      return
+    }
+
+    for (const rule of enabledRules) {
+      const value = extractByPath(parsed, rule.jsonPath)
+      if (value !== undefined) {
+        environmentStore.setVariable(rule.variableName, value)
+      }
+    }
+  }
+
+  /** Load editor state from a history entry that has no saved-request match. */
+  loadFromHistoryFallback(entry: { method: HttpMethod; url: string; requestName?: string | null }) {
+    this.requestId = crypto.randomUUID()
+    this.name = entry.requestName || 'History Replay'
+    this.method = entry.method
+    this.url = entry.url
+    this.queryParams = [createEmptyPair()]
+    this.headers = [createEmptyPair()]
+    this.bodyType = 'none'
+    this.jsonBody = ''
+    this.rawBody = ''
+    this.formPairs = [createEmptyPair()]
+    this.multipartFields = [createEmptyMultipartField()]
+    this.graphqlQuery = ''
+    this.graphqlVariables = ''
+    this.extractionRules = [createEmptyExtractionRule()]
+    this.applyAuthFields(parseAuthConfig(undefined))
+    this.response = null
+    this.errorMessage = null
+    this.isDirty = false
+  }
+
   reset() {
-    this.requestId = null;
-    this.name = "New Request";
-    this.method = "GET";
-    this.url = "";
-    this.queryParams = [createEmptyPair()];
-    this.headers = [createEmptyPair()];
-    this.bodyType = "none";
-    this.jsonBody = "";
-    this.rawBody = "";
-    this.formPairs = [createEmptyPair()];
-    this.multipartFields = [createEmptyMultipartField()];
-    this.authType = "none";
-    this.bearerToken = "";
-    this.basicUsername = "";
-    this.basicPassword = "";
-    this.apiKeyKey = "";
-    this.apiKeyValue = "";
-    this.apiKeyLocation = "header";
-    this.response = null;
-    this.errorMessage = null;
-    this.isDirty = false;
+    this.requestId = null
+    this.name = 'New Request'
+    this.method = 'GET'
+    this.url = ''
+    this.queryParams = [createEmptyPair()]
+    this.headers = [createEmptyPair()]
+    this.bodyType = 'none'
+    this.jsonBody = ''
+    this.rawBody = ''
+    this.formPairs = [createEmptyPair()]
+    this.multipartFields = [createEmptyMultipartField()]
+    this.graphqlQuery = ''
+    this.graphqlVariables = ''
+    this.extractionRules = [createEmptyExtractionRule()]
+    this.applyAuthFields(parseAuthConfig(undefined))
+    this.response = null
+    this.pinnedResponse = null
+    this.errorMessage = null
+    this.isDirty = false
+  }
+
+  pinResponse() {
+    if (this.response) {
+      this.pinnedResponse = { ...this.response }
+    }
+  }
+
+  unpinResponse() {
+    this.pinnedResponse = null
   }
 }
 
-export const editorStore = new EditorStore();
+export const editorStore = new EditorStore()

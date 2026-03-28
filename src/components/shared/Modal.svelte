@@ -5,7 +5,8 @@
     title,
     onclose,
     children,
-  }: { title: string; onclose: () => void; children: Snippet } = $props();
+    wide = false,
+  }: { title: string; onclose: () => void; children: Snippet; wide?: boolean } = $props();
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") onclose();
@@ -17,10 +18,10 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="overlay" onclick={onclose}>
-  <div class="modal" onclick={(e) => e.stopPropagation()}>
+  <div class="modal" class:wide onclick={(e) => e.stopPropagation()}>
     <div class="header">
       <h2>{title}</h2>
-      <button class="close-btn" onclick={onclose}>✕</button>
+      <button class="close-btn" onclick={onclose} aria-label="Close">✕</button>
     </div>
     <div class="body">
       {@render children()}
@@ -32,7 +33,7 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-backdrop);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -42,10 +43,10 @@
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-modal);
     min-width: 500px;
     max-width: 90vw;
-    max-height: 80vh;
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
   }
@@ -69,5 +70,9 @@
     padding: var(--sp-lg);
     overflow-y: auto;
     flex: 1;
+  }
+  .modal.wide {
+    min-width: 800px;
+    width: 80vw;
   }
 </style>

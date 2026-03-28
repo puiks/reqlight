@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from "../shared/Modal.svelte";
+  import ImportSection from "./ImportSection.svelte";
   import { appStore } from "../../lib/stores/app.svelte";
   import { environmentStore } from "../../lib/stores/environment.svelte";
   import { toastStore } from "../../lib/stores/toast.svelte";
@@ -8,12 +9,14 @@
     exportPostmanCollection,
     importPostmanEnvironment,
     exportPostmanEnvironment,
+    importOpenapi,
+    importHar,
   } from "../../lib/commands";
 
   let { onclose }: { onclose: () => void } = $props();
 
   let activeTab = $state<"import" | "export">("import");
-  let importType = $state<"collection" | "environment">("collection");
+  let importType = $state<"collection" | "environment" | "openapi" | "har">("collection");
   let jsonInput = $state("");
   let isProcessing = $state(false);
   let errorMessage = $state<string | null>(null);
@@ -23,7 +26,18 @@
     isProcessing = true;
     errorMessage = null;
     try {
-      if (importType === "collection") {
+      if (importType === "openapi") {
+        const collections = await importOpenapi(jsonInput);
+        appStore.collections = [...appStore.collections, ...collections];
+        appStore.scheduleSave();
+        const count = collections.reduce((sum, c) => sum + c.requests.length, 0);
+        toastStore.show(`Imported ${collections.length} collection(s) with ${count} requests`);
+      } else if (importType === "har") {
+        const collection = await importHar(jsonInput);
+        appStore.collections = [...appStore.collections, collection];
+        appStore.scheduleSave();
+        toastStore.show(`Imported ${collection.requests.length} requests from HAR`);
+      } else if (importType === "collection") {
         const collection = await importPostmanCollection(jsonInput);
         appStore.collections = [...appStore.collections, collection];
         appStore.scheduleSave();
@@ -106,45 +120,37 @@
       <button class="tab" class:active={activeTab === "import"} onclick={() => { activeTab = "import"; exportResult = null; }}>
         Import
       </button>
-      <button class="tab" class:active={activeTab === "export"} onclick={() => { activeTab = "export"; errorMessage = null; }}>
+      <button class="tab" class:active={activeTab === "export"} onclick={() => { activeTab = "export"; errorMessage = null; if (importType === "openapi" || importType === "har") importType = "collection"; }}>
         Export
       </button>
     </div>
 
     <div class="type-bar">
       <button class="type-btn" class:active={importType === "collection"} onclick={() => (importType = "collection")}>
-        Collection
+        Postman Collection
       </button>
       <button class="type-btn" class:active={importType === "environment"} onclick={() => (importType = "environment")}>
-        Environment
+        Postman Environment
       </button>
+      {#if activeTab === "import"}
+        <button class="type-btn" class:active={importType === "openapi"} onclick={() => (importType = "openapi")}>
+          OpenAPI / Swagger
+        </button>
+        <button class="type-btn" class:active={importType === "har"} onclick={() => (importType = "har")}>
+          HAR
+        </button>
+      {/if}
     </div>
 
     {#if activeTab === "import"}
-      <div class="import-section">
-        <div class="file-upload">
-          <label class="file-label">
-            Choose file or paste JSON below
-            <input type="file" accept=".json" onchange={handleFileUpload} class="file-input" />
-          </label>
-        </div>
-        <textarea
-          class="json-textarea"
-          placeholder="Paste Postman {importType === 'collection' ? 'Collection' : 'Environment'} JSON here..."
-          bind:value={jsonInput}
-          spellcheck="false"
-        ></textarea>
-        {#if errorMessage}
-          <div class="error">{errorMessage}</div>
-        {/if}
-        <button
-          class="action-btn"
-          onclick={handleImport}
-          disabled={isProcessing || !jsonInput.trim()}
-        >
-          {isProcessing ? "Importing..." : "Import"}
-        </button>
-      </div>
+      <ImportSection
+        {importType}
+        bind:jsonInput
+        {isProcessing}
+        {errorMessage}
+        onimport={handleImport}
+        onfileupload={handleFileUpload}
+      />
     {:else}
       <div class="export-section">
         {#if importType === "collection"}
@@ -219,23 +225,10 @@
     color: var(--color-info);
     font-weight: 600;
   }
-  .import-section,
   .export-section {
     display: flex;
     flex-direction: column;
     gap: var(--sp-sm);
-  }
-  .file-upload {
-    font-size: var(--fs-caption);
-    color: var(--text-secondary);
-  }
-  .file-label {
-    cursor: pointer;
-  }
-  .file-input {
-    display: block;
-    margin-top: var(--sp-xs);
-    font-size: var(--fs-caption);
   }
   .json-textarea {
     width: 100%;

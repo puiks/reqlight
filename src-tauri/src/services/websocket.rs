@@ -4,6 +4,7 @@ use std::sync::Arc;
 use futures_util::{SinkExt, StreamExt};
 use serde::Serialize;
 use tokio::sync::Mutex;
+use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::Message;
 
 /// Payload emitted to the frontend via Tauri events.
@@ -45,12 +46,13 @@ impl WsManager {
         }
     }
 
-    /// Connect to a WebSocket URL. Spawns a background task to receive messages
-    /// and emit them as Tauri events. Returns the connection ID.
+    /// Connect to a WebSocket URL with optional custom headers.
+    /// Spawns a background task to receive messages and emit them as Tauri events.
     pub async fn connect<F>(
         &self,
         connection_id: String,
         url: &str,
+        headers: &[(String, String)],
         emit_fn: F,
     ) -> Result<(), String>
     where
@@ -59,7 +61,20 @@ impl WsManager {
         // Validate URL before connecting
         let _ = url::Url::parse(url).map_err(|e| format!("Invalid WebSocket URL: {e}"))?;
 
-        let (ws_stream, _) = tokio_tungstenite::connect_async(url)
+        // Build request with custom headers
+        let mut request = url
+            .into_client_request()
+            .map_err(|e| format!("Invalid WebSocket URL: {e}"))?;
+        for (key, value) in headers {
+            if let (Ok(name), Ok(val)) = (
+                key.parse::<tokio_tungstenite::tungstenite::http::HeaderName>(),
+                value.parse::<tokio_tungstenite::tungstenite::http::HeaderValue>(),
+            ) {
+                request.headers_mut().insert(name, val);
+            }
+        }
+
+        let (ws_stream, _) = tokio_tungstenite::connect_async(request)
             .await
             .map_err(|e| format!("WebSocket connection failed: {e}"))?;
 
@@ -156,99 +171,5 @@ impl WsManager {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use tokio_tungstenite::accept_async;
-
-    /// Start a simple echo WebSocket server on a random port.
-    async fn start_echo_server() -> String {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let addr = listener.local_addr().unwrap();
-        let url = format!("ws://{addr}");
-
-        tokio::spawn(async move {
-            while let Ok((stream, _)) = listener.accept().await {
-                tokio::spawn(async move {
-                    if let Ok(ws) = accept_async(stream).await {
-                        let (mut tx, mut rx) = ws.split();
-                        while let Some(Ok(msg)) = rx.next().await {
-                            if msg.is_text() {
-                                let _ = tx.send(msg).await;
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-        // Give server time to bind
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-        url
-    }
-
-    #[tokio::test]
-    async fn connect_and_send_message() {
-        let url = start_echo_server().await;
-        let manager = WsManager::new();
-
-        let received = Arc::new(Mutex::new(Vec::<WsEvent>::new()));
-        let received_clone = received.clone();
-
-        let emit = move |event: WsEvent| {
-            let r = received_clone.clone();
-            tokio::spawn(async move {
-                r.lock().await.push(event);
-            });
-        };
-
-        manager
-            .connect("test-1".to_string(), &url, emit)
-            .await
-            .unwrap();
-
-        // Send a message
-        manager.send("test-1", "hello").await.unwrap();
-
-        // Wait for echo
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-
-        let events = received.lock().await;
-        assert!(events
-            .iter()
-            .any(|e| matches!(e.event_type, WsEventType::Connected)));
-        assert!(events
-            .iter()
-            .any(|e| matches!(e.event_type, WsEventType::Message)
-                && e.data.as_deref() == Some("hello")));
-    }
-
-    #[tokio::test]
-    async fn disconnect_closes_connection() {
-        let url = start_echo_server().await;
-        let manager = WsManager::new();
-
-        let emit = |_event: WsEvent| {};
-
-        manager
-            .connect("test-2".to_string(), &url, emit)
-            .await
-            .unwrap();
-
-        manager.disconnect("test-2").await.unwrap();
-
-        // Send should fail after disconnect
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-        let result = manager.send("test-2", "should fail").await;
-        assert!(result.is_err());
-    }
-
-    #[tokio::test]
-    async fn invalid_url_returns_error() {
-        let manager = WsManager::new();
-        let emit = |_event: WsEvent| {};
-        let result = manager
-            .connect("test-3".to_string(), "not-a-url", emit)
-            .await;
-        assert!(result.is_err());
-    }
-}
+#[path = "websocket_tests.rs"]
+mod tests;

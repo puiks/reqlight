@@ -4,8 +4,10 @@
 
   let {
     onopenenvs,
+    onopensettings,
   }: {
     onopenenvs: () => void;
+    onopensettings: () => void;
   } = $props();
 
   function toggleSidebar() {
@@ -46,6 +48,9 @@
 
   <div class="right">
     <EnvironmentPicker onmanage={onopenenvs} />
+    <button class="icon-btn" onclick={onopensettings} title="Settings">
+      ⚙
+    </button>
     <button class="icon-btn" onclick={toggleTheme} title="Toggle Theme">
       {isDark ? '☀' : '☾'}
     </button>

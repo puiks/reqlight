@@ -1,8 +1,8 @@
-export const APP_NAME = "Reqlight";
-export const SAVE_DEBOUNCE_MS = 500;
-export const DEFAULT_REQUEST_TIMEOUT = 30;
-export const TOAST_DISMISS_MS = 2000;
-export const MAX_HISTORY_ENTRIES = 100;
+export const APP_NAME = 'Reqlight'
+export const SAVE_DEBOUNCE_MS = 500
+export const DEFAULT_REQUEST_TIMEOUT = 30
+export const TOAST_DISMISS_MS = 2000
+export const MAX_HISTORY_ENTRIES = 100
 
 export const SPACING = {
   xs: 4,
@@ -10,7 +10,7 @@ export const SPACING = {
   md: 12,
   lg: 16,
   xl: 20,
-} as const;
+} as const
 
 export const DIMENSIONS = {
   sidebarMinWidth: 200,
@@ -25,4 +25,4 @@ export const DIMENSIONS = {
   kvRowHeight: 32,
   kvHeaderHeight: 28,
   headerNameColumnWidth: 200,
-} as const;
+} as const
