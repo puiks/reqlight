@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-29
+
 ### Changed
 
 - Migrate frontend toolchain from Vite 6 + Biome to Vite+ (Vite 8 + Oxlint + Oxfmt)
