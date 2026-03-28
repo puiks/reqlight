@@ -1,230 +1,230 @@
 export interface KeyValuePair {
-  id: string;
-  key: string;
-  value: string;
-  isEnabled: boolean;
-  isSecret: boolean;
+  id: string
+  key: string
+  value: string
+  isEnabled: boolean
+  isSecret: boolean
 }
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'
 
 export interface MultipartField {
-  id: string;
-  name: string;
-  value: string;
-  filePath?: string;
-  isEnabled: boolean;
+  id: string
+  name: string
+  value: string
+  filePath?: string
+  isEnabled: boolean
 }
 
 export type RequestBody =
-  | "none"
+  | 'none'
   | { json: string }
   | { formData: KeyValuePair[] }
   | { rawText: string }
   | { multipart: MultipartField[] }
-  | { graphql: { query: string; variables: string } };
+  | { graphql: { query: string; variables: string } }
 
-export type BodyType = "none" | "json" | "formData" | "rawText" | "multipart" | "graphql";
+export type BodyType = 'none' | 'json' | 'formData' | 'rawText' | 'multipart' | 'graphql'
 
 // Auth types
-export type AuthType = "none" | "bearerToken" | "basicAuth" | "apiKey" | "oauth2";
-export type ApiKeyLocation = "header" | "query";
-export type OAuthGrantType = "authorization_code" | "client_credentials";
+export type AuthType = 'none' | 'bearerToken' | 'basicAuth' | 'apiKey' | 'oauth2'
+export type ApiKeyLocation = 'header' | 'query'
+export type OAuthGrantType = 'authorization_code' | 'client_credentials'
 
 export interface OAuth2Config {
-  grantType: OAuthGrantType;
-  clientId: string;
-  clientSecret: string;
-  authUrl: string;
-  tokenUrl: string;
-  scopes: string;
-  accessToken: string;
-  refreshToken: string;
-  tokenExpiry: string | null;
+  grantType: OAuthGrantType
+  clientId: string
+  clientSecret: string
+  authUrl: string
+  tokenUrl: string
+  scopes: string
+  accessToken: string
+  refreshToken: string
+  tokenExpiry: string | null
 }
 
 export type AuthConfig =
-  | "none"
+  | 'none'
   | { bearerToken: { token: string } }
   | { basicAuth: { username: string; password: string } }
   | { apiKey: { key: string; value: string; location: ApiKeyLocation } }
-  | { oauth2: OAuth2Config };
+  | { oauth2: OAuth2Config }
 
 export interface ExtractionRule {
-  id: string;
-  variableName: string;
-  jsonPath: string;
-  isEnabled: boolean;
+  id: string
+  variableName: string
+  jsonPath: string
+  isEnabled: boolean
 }
 
 export interface SavedRequest {
-  id: string;
-  name: string;
-  method: HttpMethod;
-  url: string;
-  queryParams: KeyValuePair[];
-  headers: KeyValuePair[];
-  body: RequestBody;
-  auth?: AuthConfig;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-  responseExtractions?: ExtractionRule[];
+  id: string
+  name: string
+  method: HttpMethod
+  url: string
+  queryParams: KeyValuePair[]
+  headers: KeyValuePair[]
+  body: RequestBody
+  auth?: AuthConfig
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  responseExtractions?: ExtractionRule[]
 }
 
 export interface RequestCollection {
-  id: string;
-  name: string;
-  requests: SavedRequest[];
-  sortOrder: number;
-  createdAt: string;
+  id: string
+  name: string
+  requests: SavedRequest[]
+  sortOrder: number
+  createdAt: string
 }
 
 export interface RequestEnvironment {
-  id: string;
-  name: string;
-  variables: KeyValuePair[];
+  id: string
+  name: string
+  variables: KeyValuePair[]
 }
 
 export interface RequestHistoryEntry {
-  id: string;
-  method: HttpMethod;
-  url: string;
-  statusCode: number | null;
-  timestamp: string;
-  elapsedTime: number | null;
+  id: string
+  method: HttpMethod
+  url: string
+  statusCode: number | null
+  timestamp: string
+  elapsedTime: number | null
   /** ID of the saved request this was sent from (null if detached) */
-  requestId?: string | null;
+  requestId?: string | null
   /** Name of the request at time of send */
-  requestName?: string | null;
+  requestName?: string | null
   /** Full request snapshot for replay (frontend-only, not persisted to Rust) */
-  snapshot?: SavedRequest;
+  snapshot?: SavedRequest
 }
 
 export interface HeaderPair {
-  key: string;
-  value: string;
+  key: string
+  value: string
 }
 
 export interface ResponseRecord {
-  statusCode: number;
-  headers: HeaderPair[];
-  bodyString: string | null;
-  elapsedTime: number;
-  bodySize: number;
-  isJson: boolean;
-  isTruncated: boolean;
-  contentType: string;
+  statusCode: number
+  headers: HeaderPair[]
+  bodyString: string | null
+  elapsedTime: number
+  bodySize: number
+  isJson: boolean
+  isTruncated: boolean
+  contentType: string
 }
 
 export interface ProxyConfig {
-  proxyUrl: string;
-  noProxy: string;
-  enabled: boolean;
+  proxyUrl: string
+  noProxy: string
+  enabled: boolean
 }
 
 export interface AppState {
-  collections: RequestCollection[];
-  environments: RequestEnvironment[];
-  activeEnvironmentId: string | null;
-  lastSelectedCollectionId: string | null;
-  lastSelectedRequestId: string | null;
-  history: RequestHistoryEntry[];
-  proxyConfig?: ProxyConfig;
+  collections: RequestCollection[]
+  environments: RequestEnvironment[]
+  activeEnvironmentId: string | null
+  lastSelectedCollectionId: string | null
+  lastSelectedRequestId: string | null
+  history: RequestHistoryEntry[]
+  proxyConfig?: ProxyConfig
 }
 
-export type CodegenLanguage = "javascript-fetch" | "javascript-axios" | "python-requests" | "curl";
+export type CodegenLanguage = 'javascript-fetch' | 'javascript-axios' | 'python-requests' | 'curl'
 
-export type EditorTab = "params" | "headers" | "auth" | "body" | "extract";
-export type ResponseTab = "body" | "headers";
+export type EditorTab = 'params' | 'headers' | 'auth' | 'body' | 'extract'
+export type ResponseTab = 'body' | 'headers'
 
 export const HTTP_METHODS: HttpMethod[] = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-];
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+]
 
 export const METHOD_COLORS: Record<HttpMethod, string> = {
-  GET: "var(--color-method-get)",
-  POST: "var(--color-method-post)",
-  PUT: "var(--color-method-put)",
-  PATCH: "var(--color-method-patch)",
-  DELETE: "var(--color-method-delete)",
-  HEAD: "var(--color-method-head)",
-  OPTIONS: "var(--color-method-options)",
-};
+  GET: 'var(--color-method-get)',
+  POST: 'var(--color-method-post)',
+  PUT: 'var(--color-method-put)',
+  PATCH: 'var(--color-method-patch)',
+  DELETE: 'var(--color-method-delete)',
+  HEAD: 'var(--color-method-head)',
+  OPTIONS: 'var(--color-method-options)',
+}
 
 // Helper: create an empty ExtractionRule
 export function createEmptyExtractionRule(): ExtractionRule {
   return {
     id: crypto.randomUUID(),
-    variableName: "",
-    jsonPath: "",
+    variableName: '',
+    jsonPath: '',
     isEnabled: true,
-  };
+  }
 }
 
 // Helper: create an empty KeyValuePair
 export function createEmptyPair(): KeyValuePair {
   return {
     id: crypto.randomUUID(),
-    key: "",
-    value: "",
+    key: '',
+    value: '',
     isEnabled: true,
     isSecret: false,
-  };
+  }
 }
 
 // Helper: create a default empty RequestBody
 export function createEmptyBody(): RequestBody {
-  return "none";
+  return 'none'
 }
 
 // Helper: get body type from RequestBody
 export function getBodyType(body: RequestBody): BodyType {
-  if (body === "none") return "none";
-  if (typeof body === "object" && "json" in body) return "json";
-  if (typeof body === "object" && "formData" in body) return "formData";
-  if (typeof body === "object" && "rawText" in body) return "rawText";
-  if (typeof body === "object" && "multipart" in body) return "multipart";
-  if (typeof body === "object" && "graphql" in body) return "graphql";
-  return "none";
+  if (body === 'none') return 'none'
+  if (typeof body === 'object' && 'json' in body) return 'json'
+  if (typeof body === 'object' && 'formData' in body) return 'formData'
+  if (typeof body === 'object' && 'rawText' in body) return 'rawText'
+  if (typeof body === 'object' && 'multipart' in body) return 'multipart'
+  if (typeof body === 'object' && 'graphql' in body) return 'graphql'
+  return 'none'
 }
 
 export function getGraphQLContent(body: RequestBody): { query: string; variables: string } {
-  if (typeof body === "object" && "graphql" in body) return body.graphql;
-  return { query: "", variables: "" };
+  if (typeof body === 'object' && 'graphql' in body) return body.graphql
+  return { query: '', variables: '' }
 }
 
 export function getMultipartFields(body: RequestBody): MultipartField[] {
-  if (typeof body === "object" && "multipart" in body) return body.multipart;
-  return [];
+  if (typeof body === 'object' && 'multipart' in body) return body.multipart
+  return []
 }
 
 export function createEmptyMultipartField(): MultipartField {
   return {
     id: crypto.randomUUID(),
-    name: "",
-    value: "",
+    name: '',
+    value: '',
     isEnabled: true,
-  };
+  }
 }
 
 // Helper: get body content from RequestBody
 export function getBodyContent(body: RequestBody): string {
-  if (typeof body === "object" && "json" in body) return body.json;
-  if (typeof body === "object" && "rawText" in body) return body.rawText;
-  return "";
+  if (typeof body === 'object' && 'json' in body) return body.json
+  if (typeof body === 'object' && 'rawText' in body) return body.rawText
+  return ''
 }
 
 // Helper: get form pairs from RequestBody
 export function getFormPairs(body: RequestBody): KeyValuePair[] {
-  if (typeof body === "object" && "formData" in body) return body.formData;
-  return [];
+  if (typeof body === 'object' && 'formData' in body) return body.formData
+  return []
 }
 
 // Helper: build RequestBody from parts
@@ -237,33 +237,33 @@ export function buildRequestBody(
   graphql?: { query: string; variables: string },
 ): RequestBody {
   switch (type) {
-    case "none":
-      return "none";
-    case "json":
-      return { json: jsonText };
-    case "formData":
-      return { formData: formPairs };
-    case "rawText":
-      return { rawText: rawText };
-    case "multipart":
-      return { multipart: multipartFields ?? [] };
-    case "graphql":
-      return { graphql: graphql ?? { query: "", variables: "" } };
+    case 'none':
+      return 'none'
+    case 'json':
+      return { json: jsonText }
+    case 'formData':
+      return { formData: formPairs }
+    case 'rawText':
+      return { rawText: rawText }
+    case 'multipart':
+      return { multipart: multipartFields ?? [] }
+    case 'graphql':
+      return { graphql: graphql ?? { query: '', variables: '' } }
   }
 }
 
 // Auth helpers
 export function createEmptyAuth(): AuthConfig {
-  return "none";
+  return 'none'
 }
 
 export function getAuthType(auth?: AuthConfig): AuthType {
-  if (!auth || auth === "none") return "none";
-  if (typeof auth === "object" && "bearerToken" in auth) return "bearerToken";
-  if (typeof auth === "object" && "basicAuth" in auth) return "basicAuth";
-  if (typeof auth === "object" && "apiKey" in auth) return "apiKey";
-  if (typeof auth === "object" && "oauth2" in auth) return "oauth2";
-  return "none";
+  if (!auth || auth === 'none') return 'none'
+  if (typeof auth === 'object' && 'bearerToken' in auth) return 'bearerToken'
+  if (typeof auth === 'object' && 'basicAuth' in auth) return 'basicAuth'
+  if (typeof auth === 'object' && 'apiKey' in auth) return 'apiKey'
+  if (typeof auth === 'object' && 'oauth2' in auth) return 'oauth2'
+  return 'none'
 }
 
 export function buildAuthConfig(
@@ -274,59 +274,59 @@ export function buildAuthConfig(
   oauth2?: OAuth2Config,
 ): AuthConfig {
   switch (type) {
-    case "none":
-      return "none";
-    case "bearerToken":
-      return { bearerToken: { token: bearer.token } };
-    case "basicAuth":
-      return { basicAuth: { username: basic.username, password: basic.password } };
-    case "apiKey":
-      return { apiKey: { key: apiKey.key, value: apiKey.value, location: apiKey.location } };
-    case "oauth2":
-      return { oauth2: oauth2 ?? createEmptyOAuth2Config() };
+    case 'none':
+      return 'none'
+    case 'bearerToken':
+      return { bearerToken: { token: bearer.token } }
+    case 'basicAuth':
+      return { basicAuth: { username: basic.username, password: basic.password } }
+    case 'apiKey':
+      return { apiKey: { key: apiKey.key, value: apiKey.value, location: apiKey.location } }
+    case 'oauth2':
+      return { oauth2: oauth2 ?? createEmptyOAuth2Config() }
   }
 }
 
 export function createEmptyOAuth2Config(): OAuth2Config {
   return {
-    grantType: "client_credentials",
-    clientId: "",
-    clientSecret: "",
-    authUrl: "",
-    tokenUrl: "",
-    scopes: "",
-    accessToken: "",
-    refreshToken: "",
+    grantType: 'client_credentials',
+    clientId: '',
+    clientSecret: '',
+    authUrl: '',
+    tokenUrl: '',
+    scopes: '',
+    accessToken: '',
+    refreshToken: '',
     tokenExpiry: null,
-  };
+  }
 }
 
 // Collection Runner types
 export interface CollectionRunResult {
-  requestId: string;
-  requestName: string;
-  method: HttpMethod;
-  url: string;
-  statusCode: number | null;
-  elapsedTime: number | null;
-  passed: boolean;
-  errorMessage?: string;
+  requestId: string
+  requestName: string
+  method: HttpMethod
+  url: string
+  statusCode: number | null
+  elapsedTime: number | null
+  passed: boolean
+  errorMessage?: string
 }
 
-export type CollectionRunStatus = "idle" | "running" | "stopped" | "completed";
+export type CollectionRunStatus = 'idle' | 'running' | 'stopped' | 'completed'
 
 // WebSocket types
-export type ConnectionStatus = "disconnected" | "connecting" | "connected";
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
 
 export interface WsMessage {
-  id: string;
-  direction: "sent" | "received";
-  content: string;
-  timestamp: string;
+  id: string
+  direction: 'sent' | 'received'
+  content: string
+  timestamp: string
 }
 
 export interface WsEvent {
-  connection_id: string;
-  event_type: "message" | "connected" | "disconnected" | "error";
-  data: string | null;
+  connection_id: string
+  event_type: 'message' | 'connected' | 'disconnected' | 'error'
+  data: string | null
 }

@@ -4,71 +4,71 @@
  * Returns the stringified value, or undefined if the path doesn't resolve.
  */
 export function extractByPath(obj: unknown, path: string): string | undefined {
-  if (obj === null || obj === undefined) return undefined;
+  if (obj === null || obj === undefined) return undefined
 
   // Normalize: strip leading "$." or "$"
-  let normalized = path.trim();
-  if (normalized.startsWith("$.")) {
-    normalized = normalized.slice(2);
-  } else if (normalized.startsWith("$[")) {
-    normalized = normalized.slice(1);
-  } else if (normalized === "$") {
-    return stringify(obj);
-  } else if (normalized.startsWith("$")) {
-    normalized = normalized.slice(1);
+  let normalized = path.trim()
+  if (normalized.startsWith('$.')) {
+    normalized = normalized.slice(2)
+  } else if (normalized.startsWith('$[')) {
+    normalized = normalized.slice(1)
+  } else if (normalized === '$') {
+    return stringify(obj)
+  } else if (normalized.startsWith('$')) {
+    normalized = normalized.slice(1)
   }
 
-  if (!normalized) return stringify(obj);
+  if (!normalized) return stringify(obj)
 
   // Tokenize: split by "." but handle array indices like "items[0]"
-  const tokens = tokenize(normalized);
+  const tokens = tokenize(normalized)
 
-  let current: unknown = obj;
+  let current: unknown = obj
   for (const token of tokens) {
-    if (current === null || current === undefined) return undefined;
+    if (current === null || current === undefined) return undefined
 
-    const arrayMatch = token.match(/^([^[]*)\[(\d+)\]$/);
+    const arrayMatch = token.match(/^([^[]*)\[(\d+)\]$/)
     if (arrayMatch) {
-      const [, key, indexStr] = arrayMatch;
+      const [, key, indexStr] = arrayMatch
       if (key) {
-        if (typeof current !== "object") return undefined;
-        current = (current as Record<string, unknown>)[key];
+        if (typeof current !== 'object') return undefined
+        current = (current as Record<string, unknown>)[key]
       }
-      if (!Array.isArray(current)) return undefined;
-      const index = parseInt(indexStr, 10);
-      current = current[index];
+      if (!Array.isArray(current)) return undefined
+      const index = parseInt(indexStr, 10)
+      current = current[index]
     } else {
-      if (typeof current !== "object" || current === null) return undefined;
-      current = (current as Record<string, unknown>)[token];
+      if (typeof current !== 'object' || current === null) return undefined
+      current = (current as Record<string, unknown>)[token]
     }
   }
 
-  return stringify(current);
+  return stringify(current)
 }
 
 function tokenize(path: string): string[] {
-  const tokens: string[] = [];
-  let current = "";
-  let inBracket = false;
+  const tokens: string[] = []
+  let current = ''
+  let inBracket = false
   for (let i = 0; i < path.length; i++) {
-    const ch = path[i];
-    if (ch === "[") inBracket = true;
-    if (ch === "]") inBracket = false;
-    if (ch === "." && !inBracket) {
-      if (current) tokens.push(current);
-      current = "";
+    const ch = path[i]
+    if (ch === '[') inBracket = true
+    if (ch === ']') inBracket = false
+    if (ch === '.' && !inBracket) {
+      if (current) tokens.push(current)
+      current = ''
     } else {
-      current += ch;
+      current += ch
     }
   }
-  if (current) tokens.push(current);
-  return tokens;
+  if (current) tokens.push(current)
+  return tokens
 }
 
 function stringify(value: unknown): string | undefined {
-  if (value === undefined) return undefined;
-  if (value === null) return "null";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return JSON.stringify(value);
+  if (value === undefined) return undefined
+  if (value === null) return 'null'
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return JSON.stringify(value)
 }
