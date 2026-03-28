@@ -12,38 +12,50 @@
 ```
 src/                          # Svelte 5 Frontend
 ├── main.ts                   # App entry
-├── App.svelte                # Root component (global shortcuts, loading)
+├── App.svelte                # Root component (global shortcuts, modal state)
 ├── app.css                   # Design tokens & global styles
 ├── components/               # UI components (organized by domain)
-│   ├── editor/               # Request editor (URL bar, tabs, body)
+│   ├── editor/               # Request editor (URL bar, tabs, body, auth, extraction)
 │   ├── response/             # Response viewer (body, headers, status)
 │   ├── sidebar/              # Collection tree, search, history
 │   ├── environment/          # Environment variable management
 │   ├── toolbar/              # Toolbar, cURL import
-│   ├── layout/               # Layout shells
+│   ├── layout/               # Layout shells (MainLayout)
+│   ├── codegen/              # Code generation modal
+│   ├── runner/               # Collection runner modal
+│   ├── settings/             # App settings (proxy config)
 │   └── shared/               # Reusable primitives (Modal, Toast, etc.)
 ├── lib/
 │   ├── commands.ts           # Tauri IPC wrappers (type-safe invoke)
-│   ├── types.ts              # Shared TypeScript types
+│   ├── types.ts              # Shared TypeScript types + helpers
 │   ├── constants.ts          # Magic numbers & config values
 │   ├── stores/               # Svelte 5 rune-based state ($state, $derived)
 │   │   ├── observable.svelte.ts # Base class: observer pattern for save scheduling
-│   │   ├── app.svelte.ts     # Collections, environments, history
-│   │   └── editor.svelte.ts  # Active request editor state
+│   │   ├── app.svelte.ts     # Collections, environments, history, proxy config
+│   │   ├── editor.svelte.ts  # Active request editor state + extraction
+│   │   ├── environment.svelte.ts # Environment store (setVariable for extraction)
+│   │   ├── runner.svelte.ts  # Collection runner orchestration
+│   │   ├── history.svelte.ts # History management
+│   │   ├── toast.svelte.ts   # Toast notifications
+│   │   └── websocket.svelte.ts # WebSocket connection state
 │   └── utils/                # Pure utility functions
 │       ├── html.ts           # Shared escapeHtml (single source of truth)
 │       ├── json-highlighter.ts
 │       ├── xml-highlighter.ts
-│       └── keyboard.ts
+│       ├── jsonpath.ts       # Simple JSONPath extraction (dot notation + array index)
+│       ├── text-search.ts    # Fuzzy text search
+│       ├── errors.ts         # Error handling utilities
+│       └── keyboard.ts       # Keyboard shortcut registration
 
 src-tauri/src/                # Rust Backend
 ├── main.rs                   # Entry (delegates to lib.rs)
 ├── lib.rs                    # Tauri app setup + handler registration
 ├── commands/                 # Tauri IPC command handlers (thin layer)
-│   ├── http.rs               # send_request
+│   ├── http.rs               # send_request (with proxy support)
 │   ├── persistence.rs        # load_state / save_state
 │   ├── keychain.rs           # secret_get / secret_set / secret_delete
 │   ├── curl.rs               # parse_curl / export_curl
+│   ├── codegen.rs            # generate_code
 │   ├── collection_io.rs      # import_collection / export_collection
 │   └── websocket.rs          # ws_connect / ws_send / ws_disconnect
 ├── models/                   # Data structures (Serialize/Deserialize)
@@ -52,6 +64,9 @@ src-tauri/src/                # Rust Backend
 │   ├── collection.rs         # RequestCollection
 │   ├── environment.rs        # RequestEnvironment
 │   ├── history.rs            # RequestHistoryEntry
+│   ├── auth.rs               # AuthConfig (none/bearer/basic/apiKey)
+│   ├── extraction.rs         # ExtractionRule (JSONPath variable extraction)
+│   ├── proxy.rs              # ProxyConfig
 │   └── state.rs              # AppState (root persistence)
 ├── test_utils.rs             # Shared test helpers (make_kv, etc.) — #[cfg(test)] only
 └── services/                 # Business logic (testable, no Tauri deps)
@@ -61,8 +76,10 @@ src-tauri/src/                # Rust Backend
     ├── interpolator.rs       # {{variable}} replacement
     ├── curl_parser.rs        # cURL string → SavedRequest
     ├── curl_exporter.rs      # SavedRequest → cURL string
+    ├── code_generator.rs     # Multi-language code snippet generation
     ├── collection_import.rs  # Postman collection import
     ├── collection_export.rs  # Postman collection export
+    ├── collection_io.rs      # File dialog helpers for import/export
     ├── collection_types.rs   # Shared Postman data structures
     └── websocket.rs          # WebSocket connection manager
 ```
@@ -71,113 +88,135 @@ src-tauri/src/                # Rust Backend
 
 ### TDD & Testing
 
-- **所有新功能必须先写测试，再写实现（TDD）。**
-- Rust 测试放在各模块文件底部的 `#[cfg(test)] mod tests {}` 中。如果测试代码导致文件超 300 行，拆到 `_tests.rs` 文件。
-- 前端测试使用 vitest + jsdom，测试文件与源文件同目录，命名 `*.test.ts`。
-- 提交前必须确保 `cargo test`、`pnpm test` 和 `pnpm check` 全部通过。
-- **Rust 最低覆盖范围**：所有 `services/` 中包含纯逻辑的模块必须有单元测试。纯 I/O 封装（如 keychain）可豁免但需注释说明原因。
-- **前端最低覆盖范围**：所有 `lib/utils/` 模块必须有单元测试。**新增 `.ts` 工具文件时必须同步新增 `.test.ts`，漏一个都不允许提交。**
-- 前端组件测试（可选）使用 `@testing-library/svelte`，重点覆盖含复杂交互逻辑的组件。
-- **Rust 测试 helper 不要在每个文件里重复定义。** 共享 helper 放 `test_utils.rs`，通过 `use crate::test_utils::*` 引入。
+- **All new features must have tests written before implementation (TDD).**
+- Rust tests go in `#[cfg(test)] mod tests {}` at the bottom of each module file. If tests push the file beyond 300 lines, extract them to a `_tests.rs` file.
+- Frontend tests use vitest + jsdom, co-located with source files, named `*.test.ts`.
+- Before committing, ensure `cargo test`, `pnpm test`, and `pnpm check` all pass.
+- **Rust minimum coverage**: All modules under `services/` that contain pure logic must have unit tests. Pure I/O wrappers (e.g., keychain) are exempt but must include a comment explaining why.
+- **Frontend minimum coverage**: All `lib/utils/` modules must have unit tests. **Every new `.ts` utility file must have a corresponding `.test.ts` — no exceptions.**
+- Frontend component tests (optional) use `@testing-library/svelte`, focusing on components with complex interaction logic.
+- **Do not duplicate Rust test helpers across files.** Shared helpers go in `test_utils.rs`, imported via `use crate::test_utils::*`.
 
 ### File Organization
 
-- **单文件不超过 300 行。** 超过时必须拆分。Rust 测试行数计入总行数——如果加上测试超过 300 行，把测试拆到 `_tests.rs` 文件（用 `#[cfg(test)] #[path = "xxx_tests.rs"] mod tests;`）。
-- **按职责拆分，不按类型拆分。** 例如：把 cURL 解析和导出分成两个文件，而不是塞进一个 "curl_utils" 里。
-- **组件文件遵循单一职责原则。** 一个 `.svelte` 文件只做一件事。
-- **复用优先。** 提取共享逻辑到 `lib/utils/`（前端）或 `services/`（Rust）。
-- 新目录需要有明确的领域边界，不要随意创建。
+- **No single file exceeds 300 lines.** Split when exceeded. Rust test lines count toward the total — if tests push the file over 300 lines, extract them to a `_tests.rs` file (using `#[cfg(test)] #[path = "xxx_tests.rs"] mod tests;`).
+- **Split by responsibility, not by type.** For example: separate cURL parsing and exporting into two files, rather than combining them into one "curl_utils" file.
+- **Component files follow the single responsibility principle.** One `.svelte` file does one thing.
+- **Prefer reuse.** Extract shared logic to `lib/utils/` (frontend) or `services/` (Rust).
+- New directories must have clear domain boundaries — do not create them arbitrarily.
 
-### 代码复用 & 去重
+### Code Reuse & Deduplication
 
-- **同一个工具函数不允许在多处重复实现。** 如果两个以上文件需要同一功能（如 `escapeHtml`、`make_kv`），必须提取到共享模块。
-  - 前端共享工具函数 → `lib/utils/`（如 `html.ts`）
-  - Rust 共享测试 helper → `test_utils.rs`（`#[cfg(test)]` 门控）
-  - Store 共享逻辑 → `stores/observable.svelte.ts`（基类继承）
-- **新增工具函数前先搜索是否已有类似实现。** 用 `grep` 搜索函数名关键词，避免无意中重新造轮子。
+- **The same utility function must not be implemented in multiple places.** If two or more files need the same functionality (e.g., `escapeHtml`, `make_kv`), extract it to a shared module.
+  - Frontend shared utilities → `lib/utils/` (e.g., `html.ts`)
+  - Rust shared test helpers → `test_utils.rs` (`#[cfg(test)]` gated)
+  - Store shared logic → `stores/observable.svelte.ts` (base class inheritance)
+- **Before adding a new utility function, search for existing implementations.** Use `grep` to search for function name keywords to avoid accidentally reinventing the wheel.
 
-### 依赖卫生
+### Dependency Hygiene
 
-- **不引入未使用的依赖。** 每次添加新依赖时必须有对应的 `use`/`import`。
-- **定期清理：** 移除代码中不再引用的 crate（Cargo.toml）和 npm 包（package.json）。
-- 提交前如果修改了依赖文件，确认所有依赖都有实际用途。
+- **Do not introduce unused dependencies.** Every new dependency must have a corresponding `use`/`import`.
+- **Clean up regularly:** Remove crates (Cargo.toml) and npm packages (package.json) that are no longer referenced in code.
+- Before committing changes to dependency files, verify that all dependencies are actively used.
 
 ### Code Style
 
-- Rust: 使用 `cargo fmt` 和 `cargo clippy`，零警告策略。
-- Frontend: 遵循项目已有的 Svelte 5 runes 风格（`$state`, `$derived`, `$effect`）。
-- 类型：TypeScript 使用 strict mode，Rust 中避免 `unwrap()`（除测试代码外）。
+- Rust: Use `cargo fmt` and `cargo clippy` with a zero-warning policy.
+- Frontend: Follow the project's existing Svelte 5 runes style (`$state`, `$derived`, `$effect`).
+- Types: TypeScript uses strict mode; Rust avoids `unwrap()` (except in test code).
 
-### 提交前必须执行的检查清单
+### Commit Discipline
 
-> **每次 commit 前必须全部通过，不能跳步。CI 会严格验证这些。**
+- **Atomic commits.** Each commit should represent one logical change (one feature, one bug fix, one refactor). Do not bundle unrelated changes into a single commit.
+- **Commit messages must be in English.** Use the conventional format: a short imperative summary line (≤72 chars), optionally followed by a blank line and a longer description.
+- **Use gitmoji prefix** for commit type: `✨` (feat), `🐛` (fix), `♻️` (refactor), `🧪` (test), `📝` (docs), `🔖` (release), `🎨` (style/format), `🔧` (config).
+- **Commit at natural boundaries** — after completing a self-contained piece of work, not after accumulating a large batch. If a feature spans Rust + frontend, it is fine to commit them together as one atomic unit, but do not mix in unrelated changes.
+
+### Pre-Commit Checklist
+
+> **All checks must pass before every commit — no skipping steps. CI enforces these strictly.**
 
 ```bash
-# Rust（在 src-tauri/ 下执行）
-cargo fmt --check          # 格式检查（CI 会 diff 失败）
-cargo clippy -- -D warnings  # 零警告
-cargo test                   # 全部通过
+# Rust (run from src-tauri/)
+cargo fmt --check          # Format check (CI will fail on diff)
+cargo clippy -- -D warnings  # Zero warnings
+cargo test                   # All passing
 
 # Frontend
-pnpm test                    # 全部通过
-pnpm check                   # svelte-check + TypeScript 零错误
+pnpm test                    # All passing
+pnpm check                   # svelte-check + TypeScript zero errors
 ```
 
-- **`cargo fmt --check` 是最容易遗漏的。** 每次修改 Rust 代码后，必须先跑 `cargo fmt` 再提交。
-- 性能测试的阈值必须考虑 CI 环境（比本地慢 2-3x）。对于已知慢的操作，使用 `{ timeout: 30000 }` 并设宽松阈值。
+- **`cargo fmt --check` is the most commonly forgotten.** Always run `cargo fmt` after modifying Rust code before committing.
+- Performance test thresholds must account for CI environments (2-3x slower than local). For known-slow operations, use `{ timeout: 30000 }` with relaxed thresholds.
+
+### Modal & Callback Threading Pattern
+
+- **Modal state is managed centrally in `App.svelte`.** Each modal has a corresponding `showXxx = $state(false)` and `<XxxModal onclose={...} />`.
+- **Event callbacks thread down from App:** `App.svelte` → `MainLayout` → `Sidebar`/`ResponseView` → child components. Each layer passes callbacks via `$props()`.
+- **Do not directly import App-level modal state in child components.** Maintain unidirectional data flow: children notify parents via callbacks, parents control modal visibility.
 
 ### Tauri IPC Convention
 
-- 前端 → Rust 的调用统一走 `src/lib/commands.ts`，不直接调用 `invoke()`。
-- 命令名 Rust 侧 snake_case，前端侧 camelCase，在 commands.ts 中映射。
-- 新增 IPC 命令时，同步更新 `lib.rs` 的 handler 注册和 `commands.ts` 的类型包装。
+- All frontend → Rust calls go through `src/lib/commands.ts` — never call `invoke()` directly.
+- Command names use snake_case on the Rust side and camelCase on the frontend side, mapped in commands.ts.
+- When adding a new IPC command, update both `lib.rs` handler registration and `commands.ts` type wrappers in sync.
 
 ### Data Flow
 
-- 持久化数据存储在 `~/.../Reqlight/data.json`，秘密值存 OS keychain。
-- 环境变量通过 `{{variable}}` 语法插值，处理在 Rust 侧完成。
-- 前端 state 变更通过 debounced save（500ms）自动持久化。
+- Persistent data is stored in `~/.../Reqlight/data.json`; secrets are stored in the OS keychain.
+- Environment variables use `{{variable}}` syntax for interpolation, processed on the Rust side.
+- Frontend state changes are auto-persisted via debounced save (500ms).
 
-## Known Pitfalls / 已知踩坑点
+## Known Pitfalls
 
-> 这些是开发过程中踩过的真实 bug，列在这里避免再犯。
+> These are real bugs encountered during development — listed here to prevent recurrence.
 
-### Shell 字符串转义
-- **cURL 导出时必须转义单引号。** 用 `'it'\''s'` 语法（先关单引号、加转义单引号、再开单引号）。
-- 绝对不要直接把用户输入内嵌到 `format!("'{}'", user_input)` 里——单引号会破坏 shell 语法。
+### Shell String Escaping
+- **cURL export must escape single quotes.** Use the `'it'\''s'` syntax (close quote, escaped quote, reopen quote).
+- Never embed user input directly into `format!("'{}'", user_input)` — single quotes will break shell syntax.
 
-### Debounced Save 与窗口关闭
-- `scheduleSave()` 用 500ms debounce，关窗口时 pending 的 save 可能还没触发。
-- **必须在 `beforeunload` 里调用 `flushSave()`**，强制立即写入。
-- `editorStore.saveIfDirty()` 只保存编辑器状态，`appStore.flushSave()` 才保存集合/环境/历史。两个都要调。
+### Debounced Save & Window Close
+- `scheduleSave()` uses a 500ms debounce; pending saves may not fire when the window closes.
+- **Must call `flushSave()` in `beforeunload`** to force an immediate write.
+- `editorStore.saveIfDirty()` only saves editor state; `appStore.flushSave()` saves collections/environments/history. Both must be called.
 
-### HTTP Header 大小写
-- `reqwest::HeaderMap` 是大小写不敏感的——`contains_key("content-type")` 和 `contains_key("Content-Type")` 结果相同。
-- **但必须用 `reqwest::header::CONTENT_TYPE` 常量做 key lookup**，不要用字符串字面量，避免歧义和 clippy 警告。
+### HTTP Header Case Sensitivity
+- `reqwest::HeaderMap` is case-insensitive — `contains_key("content-type")` and `contains_key("Content-Type")` return the same result.
+- **Always use `reqwest::header::CONTENT_TYPE` constants for key lookups** — avoid string literals to prevent ambiguity and clippy warnings.
 
-### cURL 解析器的 Method 推断
-- `-d` 数据 flag 应自动将 GET 升级为 POST，**但前提是没有 `-X` 显式指定 method 且没有 `-G` flag**。
-- `-G` flag 强制 GET，但不应覆盖 `-X` 显式指定的 method。
-- 要用三个 flag（`explicit_method`、`has_data`、`force_get`）协同判断，不能在解析循环内直接改 method。
+### cURL Parser Method Inference
+- The `-d` data flag should auto-upgrade GET to POST, **but only if `-X` has not explicitly set a method and `-G` flag is not present**.
+- The `-G` flag forces GET but should not override an explicitly specified `-X` method.
+- Use three flags (`explicit_method`, `has_data`, `force_get`) to determine the final method — do not modify the method directly inside the parsing loop.
 
-### 响应体大小
-- **必须限制响应体读取大小**（当前上限 5MB）。不限的话，大响应会卡死前端 JSON 渲染。
-- 超限时截断并设置 `is_truncated` 标记，前端应展示警告。
+### Response Body Size
+- **Response body read size must be limited** (current cap: 5MB). Without a limit, large responses will freeze the frontend JSON renderer.
+- When truncated, set the `is_truncated` flag; the frontend should display a warning.
 
-### Tauri 异步命令取消
-- Tauri v2 的 `#[tauri::command]` 不支持原生取消。要实现取消需要：
-  1. 在 `lib.rs` 用 `.manage()` 注册一个 `Arc<Notify>` 信号
-  2. 在 `send_request` 里用 `tokio::select!` 竞争执行和取消信号
-  3. 前端调用单独的 `cancel_request` 命令来触发信号
-- **不要用假取消**（只设 `isLoading = false`）——后端请求还在跑，资源没释放。
+### Tauri Async Command Cancellation
+- Tauri v2's `#[tauri::command]` does not support native cancellation. To implement cancellation:
+  1. Register an `Arc<Notify>` signal via `.manage()` in `lib.rs`
+  2. Use `tokio::select!` in `send_request` to race execution against the cancel signal
+  3. The frontend calls a separate `cancel_request` command to trigger the signal
+- **Do not fake cancellation** (just setting `isLoading = false`) — the backend request continues running, leaking resources.
 
-### Rust enum Default derive
-- 如果 enum 的 Default impl 只是返回第一个 variant，**用 `#[derive(Default)]` + `#[default]` 属性**，不要手写 `impl Default`。
-- Clippy `derivable_impls` lint 会报错（在 `-D warnings` 模式下是 hard error）。
+### Rust Enum Default Derive
+- If an enum's Default impl simply returns the first variant, **use `#[derive(Default)]` + `#[default]` attribute** instead of a manual `impl Default`.
+- The clippy `derivable_impls` lint will error (hard error under `-D warnings` mode).
 
-### pub use 重导出
-- `mod.rs` 里的 `pub use submodule::*` 如果没有外部代码通过它引用，会产生 unused import 警告。
-- 只重导出实际需要从模块外访问的类型，不要无脑 `pub use *`。
+### pub use Re-exports
+- `pub use submodule::*` in `mod.rs` produces unused import warnings if no external code references it.
+- Only re-export types that are actually accessed from outside the module — do not blindly `pub use *`.
+
+### Serde Backward Compatibility (Persisted Model Extension)
+- **When adding new fields to persisted structs, always add `#[serde(default)]`.** Otherwise, old data files will fail to deserialize, causing users to lose all data.
+- Vec-typed fields are naturally compatible (`Vec::default()` is an empty array), but scalar types other than Option need explicit `#[serde(default)]` or `#[serde(default = "...")]`.
+- After adding a field, search all manual construction sites for that struct (test helpers, import logic, etc.) and add initialization for the new field.
+
+### Clippy Idiomatic Patterns
+- **Use `is_some_and(|x| ...)` instead of `map_or(false, |x| ...)`.** The clippy `unnecessary_map_or` lint will error.
+- **Use `is_none_or(|x| ...)` instead of `map_or(true, |x| ...)`.** Same reasoning.
 
 ## Build & Check Commands
 
@@ -197,3 +236,45 @@ cargo test            # Run tests
 cargo clippy          # Lint
 cargo fmt             # Format
 ```
+
+## Release & Versioning
+
+### Version Number Management
+
+Three version numbers must stay in sync, handled automatically by `scripts/bump.sh`:
+- `package.json` → `"version"`
+- `src-tauri/Cargo.toml` → `version`
+- `src-tauri/tauri.conf.json` → `"version"`
+
+**Never manually edit version numbers in these three files.**
+
+### CHANGELOG Convention
+
+- File: `CHANGELOG.md`, following the [Keep a Changelog](https://keepachangelog.com/) format.
+- During development, all user-visible changes should be recorded in the `[Unreleased]` section.
+- Categories: `Added` (new features), `Changed` (behavior changes), `Fixed` (bug fixes), `Removed` (removals).
+- `bump.sh` automatically renames `[Unreleased]` to the version number + date, and creates a new empty `[Unreleased]` section.
+
+### Release Flow
+
+```bash
+# 1. Ensure CHANGELOG.md [Unreleased] is fully populated
+# 2. Ensure all checks pass (pre-commit checklist)
+# 3. Run version release (auto-updates version numbers + CHANGELOG + creates commit + tag)
+./scripts/bump.sh 0.X.0
+
+# 4. Push to remote to trigger CI/CD
+git push --follow-tags
+```
+
+### CI/CD Pipeline
+
+- **CI (`.github/workflows/ci.yml`)**: Runs automatically on PRs and pushes — fmt, clippy, cargo test, pnpm test, pnpm check, Playwright E2E.
+- **Release (`.github/workflows/release.yml`)**: Triggered automatically when pushing a `v*` tag — builds macOS (Intel + ARM) and Windows installers, creates a GitHub Draft Release.
+- Draft Releases must be manually reviewed and published on GitHub.
+
+### Version Number Convention
+
+- Feature iterations use minor versions (0.4.0 → 0.5.0).
+- Bug fixes use patch versions (0.5.0 → 0.5.1).
+- Publish 1.0.0 upon reaching the feature-complete milestone.
