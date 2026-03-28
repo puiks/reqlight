@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -31,8 +31,8 @@ jobs:
             args: --target aarch64-apple-darwin
           - name: Windows
             runner: windows-latest
-            rust-targets: ""
-            args: ""
+            rust-targets: ''
+            args: ''
 
     steps:
       - uses: actions/checkout@v4
