@@ -4,6 +4,7 @@ use super::*;
 fn serde_none_roundtrip() {
     let auth = AuthConfig::None;
     let json = serde_json::to_string(&auth).unwrap();
+    assert_eq!(json, r#""none""#);
     let parsed: AuthConfig = serde_json::from_str(&json).unwrap();
     assert_eq!(parsed, AuthConfig::None);
 }
@@ -15,6 +16,7 @@ fn serde_bearer_roundtrip() {
     };
     let json = serde_json::to_string(&auth).unwrap();
     assert!(json.contains("bearerToken"));
+    assert!(!json.contains("_0"));
     let parsed: AuthConfig = serde_json::from_str(&json).unwrap();
     assert_eq!(parsed, auth);
 }
@@ -27,6 +29,7 @@ fn serde_basic_auth_roundtrip() {
     };
     let json = serde_json::to_string(&auth).unwrap();
     assert!(json.contains("basicAuth"));
+    assert!(!json.contains("_0"));
     let parsed: AuthConfig = serde_json::from_str(&json).unwrap();
     assert_eq!(parsed, auth);
 }
@@ -40,6 +43,7 @@ fn serde_api_key_header_roundtrip() {
     };
     let json = serde_json::to_string(&auth).unwrap();
     assert!(json.contains("apiKey"));
+    assert!(!json.contains("_0"));
     let parsed: AuthConfig = serde_json::from_str(&json).unwrap();
     assert_eq!(parsed, auth);
 }
@@ -58,8 +62,8 @@ fn serde_api_key_query_roundtrip() {
 
 #[test]
 fn backward_compatible_missing_auth_defaults_to_none() {
-    // Simulates existing SavedRequest JSON without "auth" field
-    let json = r#"{"none":{}}"#;
+    // "none" as a plain string should parse
+    let json = r#""none""#;
     let parsed: AuthConfig = serde_json::from_str(json).unwrap();
     assert_eq!(parsed, AuthConfig::None);
 }
@@ -85,8 +89,16 @@ fn serde_oauth2_roundtrip() {
 }
 
 #[test]
-fn unknown_variant_defaults_to_none() {
-    let json = r#"{"unknownType":{"_0":{}}}"#;
-    let parsed: AuthConfig = serde_json::from_str(json).unwrap();
-    assert_eq!(parsed, AuthConfig::None);
+fn serde_api_key_location_roundtrip() {
+    let header = ApiKeyLocation::Header;
+    let json = serde_json::to_string(&header).unwrap();
+    assert_eq!(json, r#""header""#);
+    let parsed: ApiKeyLocation = serde_json::from_str(&json).unwrap();
+    assert_eq!(parsed, header);
+
+    let query = ApiKeyLocation::Query;
+    let json = serde_json::to_string(&query).unwrap();
+    assert_eq!(json, r#""query""#);
+    let parsed: ApiKeyLocation = serde_json::from_str(&json).unwrap();
+    assert_eq!(parsed, query);
 }

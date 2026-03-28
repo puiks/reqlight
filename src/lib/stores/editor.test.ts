@@ -41,7 +41,7 @@ function makeSavedRequest(overrides: Partial<SavedRequest> = {}): SavedRequest {
     url: "https://example.com",
     queryParams: [],
     headers: [],
-    body: { none: {} },
+    body: "none",
     auth: createEmptyAuth(),
     sortOrder: 0,
     createdAt: new Date().toISOString(),
@@ -91,7 +91,7 @@ describe("editorStore", () => {
 
     it("loads bearer token auth", () => {
       const req = makeSavedRequest({
-        auth: { bearerToken: { _0: { token: "my-token" } } },
+        auth: { bearerToken: { token: "my-token" } },
       });
 
       editorStore.loadFrom(req);
@@ -102,7 +102,7 @@ describe("editorStore", () => {
 
     it("loads basic auth", () => {
       const req = makeSavedRequest({
-        auth: { basicAuth: { _0: { username: "user", password: "pass" } } },
+        auth: { basicAuth: { username: "user", password: "pass" } },
       });
 
       editorStore.loadFrom(req);

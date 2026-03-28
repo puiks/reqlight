@@ -66,16 +66,16 @@ export function parseAuthConfig(auth?: AuthConfig): AuthFields {
     ...defaultOAuth2Fields(),
   };
 
-  if (auth && "bearerToken" in auth) {
-    base.bearerToken = auth.bearerToken._0.token;
-  } else if (auth && "basicAuth" in auth) {
-    base.basicUsername = auth.basicAuth._0.username;
-    base.basicPassword = auth.basicAuth._0.password;
-  } else if (auth && "apiKey" in auth) {
-    base.apiKeyKey = auth.apiKey._0.key;
-    base.apiKeyValue = auth.apiKey._0.value;
-    base.apiKeyLocation = auth.apiKey._0.location;
-  } else if (auth && "oauth2" in auth) {
+  if (auth && typeof auth === "object" && "bearerToken" in auth) {
+    base.bearerToken = auth.bearerToken.token;
+  } else if (auth && typeof auth === "object" && "basicAuth" in auth) {
+    base.basicUsername = auth.basicAuth.username;
+    base.basicPassword = auth.basicAuth.password;
+  } else if (auth && typeof auth === "object" && "apiKey" in auth) {
+    base.apiKeyKey = auth.apiKey.key;
+    base.apiKeyValue = auth.apiKey.value;
+    base.apiKeyLocation = auth.apiKey.location;
+  } else if (auth && typeof auth === "object" && "oauth2" in auth) {
     const o = auth.oauth2;
     base.oauthGrantType = o.grantType;
     base.oauthClientId = o.clientId;

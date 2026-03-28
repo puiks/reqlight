@@ -108,7 +108,7 @@ class EditorStore {
     this.bodyType = getBodyType(request.body);
     this.jsonBody = getBodyContent(request.body);
     this.rawBody =
-      "rawText" in request.body ? request.body.rawText._0 : "";
+      typeof request.body === "object" && "rawText" in request.body ? request.body.rawText : "";
     this.formPairs = getFormPairs(request.body).length
       ? [...getFormPairs(request.body)]
       : [createEmptyPair()];
@@ -260,6 +260,28 @@ class EditorStore {
         environmentStore.setVariable(rule.variableName, value);
       }
     }
+  }
+
+  /** Load editor state from a history entry that has no saved-request match. */
+  loadFromHistoryFallback(entry: { method: HttpMethod; url: string; requestName?: string | null }) {
+    this.requestId = crypto.randomUUID();
+    this.name = entry.requestName || "History Replay";
+    this.method = entry.method;
+    this.url = entry.url;
+    this.queryParams = [createEmptyPair()];
+    this.headers = [createEmptyPair()];
+    this.bodyType = "none";
+    this.jsonBody = "";
+    this.rawBody = "";
+    this.formPairs = [createEmptyPair()];
+    this.multipartFields = [createEmptyMultipartField()];
+    this.graphqlQuery = "";
+    this.graphqlVariables = "";
+    this.extractionRules = [createEmptyExtractionRule()];
+    this.applyAuthFields(parseAuthConfig(undefined));
+    this.response = null;
+    this.errorMessage = null;
+    this.isDirty = false;
   }
 
   reset() {

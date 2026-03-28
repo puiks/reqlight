@@ -26,14 +26,14 @@ describe("parseAuthConfig", () => {
   });
 
   it("parses bearer token auth", () => {
-    const auth: AuthConfig = { bearerToken: { _0: { token: "my-token" } } };
+    const auth: AuthConfig = { bearerToken: { token: "my-token" } };
     const fields = parseAuthConfig(auth);
     expect(fields.authType).toBe("bearerToken");
     expect(fields.bearerToken).toBe("my-token");
   });
 
   it("parses basic auth", () => {
-    const auth: AuthConfig = { basicAuth: { _0: { username: "user", password: "pass" } } };
+    const auth: AuthConfig = { basicAuth: { username: "user", password: "pass" } };
     const fields = parseAuthConfig(auth);
     expect(fields.authType).toBe("basicAuth");
     expect(fields.basicUsername).toBe("user");
@@ -41,7 +41,7 @@ describe("parseAuthConfig", () => {
   });
 
   it("parses api key auth", () => {
-    const auth: AuthConfig = { apiKey: { _0: { key: "X-Key", value: "val", location: "query" } } };
+    const auth: AuthConfig = { apiKey: { key: "X-Key", value: "val", location: "query" } };
     const fields = parseAuthConfig(auth);
     expect(fields.authType).toBe("apiKey");
     expect(fields.apiKeyKey).toBe("X-Key");

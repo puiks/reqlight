@@ -76,9 +76,9 @@ class RunnerStore {
       const authType = getAuthType(request.auth);
       const auth = buildAuthConfig(
         authType,
-        { token: request.auth && "bearerToken" in request.auth ? request.auth.bearerToken._0.token : "" },
-        { username: request.auth && "basicAuth" in request.auth ? request.auth.basicAuth._0.username : "", password: request.auth && "basicAuth" in request.auth ? request.auth.basicAuth._0.password : "" },
-        { key: request.auth && "apiKey" in request.auth ? request.auth.apiKey._0.key : "", value: request.auth && "apiKey" in request.auth ? request.auth.apiKey._0.value : "", location: request.auth && "apiKey" in request.auth ? request.auth.apiKey._0.location : "header" },
+        { token: request.auth && typeof request.auth === "object" && "bearerToken" in request.auth ? request.auth.bearerToken.token : "" },
+        { username: request.auth && typeof request.auth === "object" && "basicAuth" in request.auth ? request.auth.basicAuth.username : "", password: request.auth && typeof request.auth === "object" && "basicAuth" in request.auth ? request.auth.basicAuth.password : "" },
+        { key: request.auth && typeof request.auth === "object" && "apiKey" in request.auth ? request.auth.apiKey.key : "", value: request.auth && typeof request.auth === "object" && "apiKey" in request.auth ? request.auth.apiKey.value : "", location: request.auth && typeof request.auth === "object" && "apiKey" in request.auth ? request.auth.apiKey.location : "header" },
       );
 
       const response = await sendRequest({

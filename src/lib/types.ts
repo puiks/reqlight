@@ -17,11 +17,11 @@ export interface MultipartField {
 }
 
 export type RequestBody =
-  | { none: Record<string, never> }
-  | { json: { _0: string } }
-  | { formData: { _0: KeyValuePair[] } }
-  | { rawText: { _0: string } }
-  | { multipart: { _0: MultipartField[] } }
+  | "none"
+  | { json: string }
+  | { formData: KeyValuePair[] }
+  | { rawText: string }
+  | { multipart: MultipartField[] }
   | { graphql: { query: string; variables: string } };
 
 export type BodyType = "none" | "json" | "formData" | "rawText" | "multipart" | "graphql";
@@ -44,10 +44,10 @@ export interface OAuth2Config {
 }
 
 export type AuthConfig =
-  | { none: Record<string, never> }
-  | { bearerToken: { _0: { token: string } } }
-  | { basicAuth: { _0: { username: string; password: string } } }
-  | { apiKey: { _0: { key: string; value: string; location: ApiKeyLocation } } }
+  | "none"
+  | { bearerToken: { token: string } }
+  | { basicAuth: { username: string; password: string } }
+  | { apiKey: { key: string; value: string; location: ApiKeyLocation } }
   | { oauth2: OAuth2Config };
 
 export interface ExtractionRule {
@@ -181,27 +181,27 @@ export function createEmptyPair(): KeyValuePair {
 
 // Helper: create a default empty RequestBody
 export function createEmptyBody(): RequestBody {
-  return { none: {} };
+  return "none";
 }
 
 // Helper: get body type from RequestBody
 export function getBodyType(body: RequestBody): BodyType {
-  if ("none" in body) return "none";
-  if ("json" in body) return "json";
-  if ("formData" in body) return "formData";
-  if ("rawText" in body) return "rawText";
-  if ("multipart" in body) return "multipart";
-  if ("graphql" in body) return "graphql";
+  if (body === "none") return "none";
+  if (typeof body === "object" && "json" in body) return "json";
+  if (typeof body === "object" && "formData" in body) return "formData";
+  if (typeof body === "object" && "rawText" in body) return "rawText";
+  if (typeof body === "object" && "multipart" in body) return "multipart";
+  if (typeof body === "object" && "graphql" in body) return "graphql";
   return "none";
 }
 
 export function getGraphQLContent(body: RequestBody): { query: string; variables: string } {
-  if ("graphql" in body) return body.graphql;
+  if (typeof body === "object" && "graphql" in body) return body.graphql;
   return { query: "", variables: "" };
 }
 
 export function getMultipartFields(body: RequestBody): MultipartField[] {
-  if ("multipart" in body) return body.multipart._0;
+  if (typeof body === "object" && "multipart" in body) return body.multipart;
   return [];
 }
 
@@ -216,14 +216,14 @@ export function createEmptyMultipartField(): MultipartField {
 
 // Helper: get body content from RequestBody
 export function getBodyContent(body: RequestBody): string {
-  if ("json" in body) return body.json._0;
-  if ("rawText" in body) return body.rawText._0;
+  if (typeof body === "object" && "json" in body) return body.json;
+  if (typeof body === "object" && "rawText" in body) return body.rawText;
   return "";
 }
 
 // Helper: get form pairs from RequestBody
 export function getFormPairs(body: RequestBody): KeyValuePair[] {
-  if ("formData" in body) return body.formData._0;
+  if (typeof body === "object" && "formData" in body) return body.formData;
   return [];
 }
 
@@ -238,15 +238,15 @@ export function buildRequestBody(
 ): RequestBody {
   switch (type) {
     case "none":
-      return { none: {} };
+      return "none";
     case "json":
-      return { json: { _0: jsonText } };
+      return { json: jsonText };
     case "formData":
-      return { formData: { _0: formPairs } };
+      return { formData: formPairs };
     case "rawText":
-      return { rawText: { _0: rawText } };
+      return { rawText: rawText };
     case "multipart":
-      return { multipart: { _0: multipartFields ?? [] } };
+      return { multipart: multipartFields ?? [] };
     case "graphql":
       return { graphql: graphql ?? { query: "", variables: "" } };
   }
@@ -254,16 +254,15 @@ export function buildRequestBody(
 
 // Auth helpers
 export function createEmptyAuth(): AuthConfig {
-  return { none: {} };
+  return "none";
 }
 
 export function getAuthType(auth?: AuthConfig): AuthType {
-  if (!auth) return "none";
-  if ("none" in auth) return "none";
-  if ("bearerToken" in auth) return "bearerToken";
-  if ("basicAuth" in auth) return "basicAuth";
-  if ("apiKey" in auth) return "apiKey";
-  if ("oauth2" in auth) return "oauth2";
+  if (!auth || auth === "none") return "none";
+  if (typeof auth === "object" && "bearerToken" in auth) return "bearerToken";
+  if (typeof auth === "object" && "basicAuth" in auth) return "basicAuth";
+  if (typeof auth === "object" && "apiKey" in auth) return "apiKey";
+  if (typeof auth === "object" && "oauth2" in auth) return "oauth2";
   return "none";
 }
 
@@ -276,13 +275,13 @@ export function buildAuthConfig(
 ): AuthConfig {
   switch (type) {
     case "none":
-      return { none: {} };
+      return "none";
     case "bearerToken":
-      return { bearerToken: { _0: { token: bearer.token } } };
+      return { bearerToken: { token: bearer.token } };
     case "basicAuth":
-      return { basicAuth: { _0: { username: basic.username, password: basic.password } } };
+      return { basicAuth: { username: basic.username, password: basic.password } };
     case "apiKey":
-      return { apiKey: { _0: { key: apiKey.key, value: apiKey.value, location: apiKey.location } } };
+      return { apiKey: { key: apiKey.key, value: apiKey.value, location: apiKey.location } };
     case "oauth2":
       return { oauth2: oauth2 ?? createEmptyOAuth2Config() };
   }
