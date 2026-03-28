@@ -2,7 +2,7 @@
   import { appStore } from "../../lib/stores/app.svelte";
   import { editorStore } from "../../lib/stores/editor.svelte";
   import { historyStore } from "../../lib/stores/history.svelte";
-  import { createEmptyPair, createEmptyBody, type RequestHistoryEntry } from "../../lib/types";
+  import type { RequestHistoryEntry } from "../../lib/types";
   import HttpMethodBadge from "../shared/HttpMethodBadge.svelte";
 
   let expanded = $state(false);
@@ -36,19 +36,7 @@
       editorStore.isDirty = false;
     } else {
       // Fallback: only method + URL available (old history entries)
-      editorStore.requestId = crypto.randomUUID();
-      editorStore.name = entry.requestName || "History Replay";
-      editorStore.method = entry.method;
-      editorStore.url = entry.url;
-      editorStore.queryParams = [createEmptyPair()];
-      editorStore.headers = [createEmptyPair()];
-      editorStore.bodyType = "none";
-      editorStore.jsonBody = "";
-      editorStore.rawBody = "";
-      editorStore.formPairs = [createEmptyPair()];
-      editorStore.response = null;
-      editorStore.errorMessage = null;
-      editorStore.isDirty = false;
+      editorStore.loadFromHistoryFallback(entry);
     }
   }
 
