@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
+use crate::error::AppError;
 use crate::models::{
     ApiKeyLocation, AuthConfig, HeaderPair, HttpMethod, KeyValuePair, ProxyConfig, RequestBody,
     ResponseRecord,
@@ -27,9 +28,10 @@ pub async fn execute(
     timeout_secs: Option<u64>,
     follow_redirects: Option<bool>,
     proxy_config: Option<&ProxyConfig>,
-) -> Result<ResponseRecord, String> {
+) -> Result<ResponseRecord, AppError> {
     // Build URL with query params
-    let mut parsed_url = reqwest::Url::parse(url).map_err(|e| format!("Invalid URL: {e}"))?;
+    let mut parsed_url =
+        reqwest::Url::parse(url).map_err(|e| AppError::Validation(format!("Invalid URL: {e}")))?;
 
     {
         let enabled_params: Vec<_> = query_params
@@ -120,7 +122,7 @@ pub async fn execute(
         }
         if let Some(proxy) = proxy_config.filter(|p| p.enabled && !p.proxy_url.is_empty()) {
             let mut p = reqwest::Proxy::all(&proxy.proxy_url)
-                .map_err(|e| format!("Invalid proxy URL: {e}"))?;
+                .map_err(|e| AppError::Network(format!("Invalid proxy URL: {e}")))?;
             if !proxy.no_proxy.is_empty() {
                 if let Some(no_proxy) = reqwest::NoProxy::from_string(&proxy.no_proxy) {
                     p = p.no_proxy(Some(no_proxy));
@@ -130,7 +132,7 @@ pub async fn execute(
         }
         custom_client = builder
             .build()
-            .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+            .map_err(|e| AppError::Network(format!("Failed to create HTTP client: {e}")))?;
         &custom_client
     } else {
         client
@@ -205,7 +207,7 @@ pub async fn execute(
                 if let Some(ref path) = field.file_path {
                     let file_bytes = tokio::fs::read(path)
                         .await
-                        .map_err(|e| format!("Failed to read file {path}: {e}"))?;
+                        .map_err(|e| AppError::Io(format!("Failed to read file {path}: {e}")))?;
                     let file_name = std::path::Path::new(path)
                         .file_name()
                         .map(|n| n.to_string_lossy().to_string())
@@ -233,10 +235,7 @@ pub async fn execute(
 
     // Execute with timing
     let start = Instant::now();
-    let response = request
-        .send()
-        .await
-        .map_err(|e| format!("Request failed: {e}"))?;
+    let response = request.send().await?;
     let elapsed = start.elapsed().as_secs_f64() * 1000.0;
 
     let status_code = response.status().as_u16() as i32;
@@ -259,10 +258,7 @@ pub async fn execute(
         .to_string();
     let is_json = content_type.contains("json");
 
-    let body_bytes = response
-        .bytes()
-        .await
-        .map_err(|e| format!("Failed to read response body: {e}"))?;
+    let body_bytes = response.bytes().await?;
     let body_size = body_bytes.len();
 
     let (body_string, is_truncated) = if body_size > MAX_RESPONSE_BODY_BYTES {
