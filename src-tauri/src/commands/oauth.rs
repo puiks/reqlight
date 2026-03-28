@@ -205,3 +205,60 @@ fn build_auth_url(
     }
     url
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_auth_url_includes_all_required_params() {
+        let url = build_auth_url(
+            "https://auth.example.com/authorize",
+            "my-client",
+            "http://127.0.0.1:8080/callback",
+            "openid profile",
+            "abc123challenge",
+            "state-xyz",
+        );
+
+        assert!(url.starts_with("https://auth.example.com/authorize?"));
+        assert!(url.contains("response_type=code"));
+        assert!(url.contains("client_id=my-client"));
+        assert!(url.contains("redirect_uri=http%3A%2F%2F127.0.0.1%3A8080%2Fcallback"));
+        assert!(url.contains("code_challenge=abc123challenge"));
+        assert!(url.contains("code_challenge_method=S256"));
+        assert!(url.contains("state=state-xyz"));
+        assert!(url.contains("scope=openid%20profile"));
+    }
+
+    #[test]
+    fn build_auth_url_omits_scope_when_empty() {
+        let url = build_auth_url(
+            "https://auth.example.com/authorize",
+            "client-id",
+            "http://localhost/cb",
+            "",
+            "challenge",
+            "state",
+        );
+
+        assert!(!url.contains("scope="));
+    }
+
+    #[test]
+    fn build_auth_url_encodes_special_characters() {
+        let url = build_auth_url(
+            "https://auth.example.com/authorize",
+            "client with spaces",
+            "http://localhost/cb",
+            "read write",
+            "ch+all/enge=",
+            "state&param",
+        );
+
+        assert!(url.contains("client_id=client%20with%20spaces"));
+        assert!(url.contains("scope=read%20write"));
+        assert!(url.contains("code_challenge=ch%2Ball%2Fenge%3D"));
+        assert!(url.contains("state=state%26param"));
+    }
+}
