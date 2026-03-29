@@ -237,8 +237,9 @@ class EditorStore {
       // Run pre-request script if present
       if (this.preRequestScript) {
         await this.runScript(this.preRequestScript, 'pre-request')
-        if (this.scriptResult?.error) {
-          this.errorMessage = `Pre-request script error: ${this.scriptResult.error}`
+        const sr = this.scriptResult as ScriptResult | null
+        if (sr?.error) {
+          this.errorMessage = `Pre-request script error: ${sr.error}`
           return
         }
       }

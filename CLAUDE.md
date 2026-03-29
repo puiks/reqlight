@@ -168,10 +168,10 @@ cargo fmt --check          # Format check (CI will fail on diff)
 cargo clippy -- -D warnings  # Zero warnings
 cargo test                   # All passing
 
-# Frontend (via Vite+)
-vp lint                      # Oxlint — zero warnings
-vp test run                  # All passing
-vp check                     # svelte-check + TypeScript zero errors
+# Frontend (use pnpm scripts to match CI exactly)
+pnpm lint                    # Oxlint — zero warnings
+pnpm test                    # All tests passing
+pnpm check                   # svelte-check + TypeScript zero errors
 ```
 
 - **Rust check order is fixed: `cargo fmt` → `cargo clippy` → `cargo test`.** Always format first, then lint, then test. Do not reverse this order.
@@ -192,9 +192,12 @@ cd src-tauri && cargo fmt --check && cargo clippy -- -D warnings && cargo test &
 eval "$(fnm env)" && fnm use 22
 npx vp fmt           # Auto-format (CI runs lint which catches format issues)
 npx vp lint          # Must be zero warnings AND zero errors
-npx vp test run      # All tests passing
-npx vp check         # svelte-check + TypeScript — zero errors
+pnpm test            # All tests passing (CI uses `pnpm test`, not `npx vp test run`)
+pnpm check           # svelte-check + TypeScript — zero errors
 ```
+
+- **⚠️ CRITICAL: CI uses `pnpm check` (= `svelte-check`), NOT `npx vp check`.** The `vp check` command only runs fmt + lint and does NOT run svelte-check. Always use `pnpm check` for the type-check step to match CI behavior exactly.
+- **⚠️ Similarly, CI uses `pnpm test` and `pnpm lint`.** To avoid discrepancies, prefer `pnpm <script>` over `npx vp <subcommand>` for CI pre-verification.
 
 - **When Claude Code completes a feature implementation, it MUST run this full CI simulation before reporting completion.** Do not rely on the user to catch CI failures.
 - **If any check fails, fix it autonomously** before reporting back. Only escalate to the user if genuinely blocked.
