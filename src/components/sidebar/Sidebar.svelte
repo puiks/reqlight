@@ -70,8 +70,22 @@
   }
 
   function handleContextMenuDelete(id: string) {
-    const c = appStore.collections.find((col) => col.id === id);
-    if (c) handleDelete("collection", c.id, c.name);
+    if (contextMenu?.type === "request") {
+      const req = appStore.collections.flatMap((c) => c.requests).find((r) => r.id === id);
+      if (req) handleDelete("request", req.id, req.name);
+    } else {
+      const c = appStore.collections.find((col) => col.id === id);
+      if (c) handleDelete("collection", c.id, c.name);
+    }
+  }
+
+  function handleRequestContext(e: MouseEvent, requestId: string) {
+    contextMenu = { x: e.clientX, y: e.clientY, type: "request", id: requestId };
+  }
+
+  function handleDuplicate(requestId: string) {
+    appStore.duplicateRequest(requestId);
+    contextMenu = null;
   }
 
   function confirmDeleteAction() {
@@ -175,6 +189,7 @@
             <CollectionItem
               {collection}
               oncontextmenu={(e) => handleCollectionContext(e, collection.id)}
+              oncontextrequest={handleRequestContext}
               ondelete={() => handleDelete("collection", collection.id, collection.name)}
               ondeleterequest={(id, name) => handleDelete("request", id, name)}
               onrun={() => onruncollection?.(collection)}
@@ -196,6 +211,7 @@
     id={contextMenu.id}
     onaddrequest={handleAddRequest}
     onrename={handleRename}
+    onduplicate={handleDuplicate}
     ondelete={handleContextMenuDelete}
   />
 {/if}

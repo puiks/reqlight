@@ -3,6 +3,7 @@ import { DEFAULT_REQUEST_TIMEOUT } from '../constants'
 import {
   buildAuthConfig,
   buildRequestBody,
+  createEmptyAssertionRule,
   createEmptyExtractionRule,
   createEmptyMultipartField,
   createEmptyPair,
@@ -11,9 +12,11 @@ import {
   getFormPairs,
   getGraphQLContent,
   getMultipartFields,
+  isAssertionComplete,
 } from '../type-helpers'
 import type {
   ApiKeyLocation,
+  AssertionRule,
   AuthType,
   BodyType,
   EditorTab,
@@ -48,6 +51,7 @@ class EditorStore {
   graphqlQuery = $state('')
   graphqlVariables = $state('')
   extractionRules = $state<ExtractionRule[]>([createEmptyExtractionRule()])
+  assertionRules = $state<AssertionRule[]>([createEmptyAssertionRule()])
 
   // Auth fields
   authType = $state<AuthType>('none')
@@ -119,6 +123,9 @@ class EditorStore {
     this.extractionRules = request.responseExtractions?.length
       ? [...request.responseExtractions]
       : [createEmptyExtractionRule()]
+    this.assertionRules = request.assertions?.length
+      ? [...request.assertions]
+      : [createEmptyAssertionRule()]
     this.applyAuthFields(parseAuthConfig(request.auth))
     this.timeoutSecs = request.timeoutSecs ?? DEFAULT_REQUEST_TIMEOUT
     this.response = null
@@ -179,6 +186,7 @@ class EditorStore {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       responseExtractions: this.extractionRules.filter((r) => r.variableName || r.jsonPath),
+      assertions: this.assertionRules.filter(isAssertionComplete),
       timeoutSecs: this.timeoutSecs !== DEFAULT_REQUEST_TIMEOUT ? this.timeoutSecs : undefined,
     }
   }
@@ -263,6 +271,7 @@ class EditorStore {
     this.graphqlQuery = ''
     this.graphqlVariables = ''
     this.extractionRules = [createEmptyExtractionRule()]
+    this.assertionRules = [createEmptyAssertionRule()]
     this.applyAuthFields(parseAuthConfig(undefined))
     this.response = null
     this.errorMessage = null
@@ -284,6 +293,7 @@ class EditorStore {
     this.graphqlQuery = ''
     this.graphqlVariables = ''
     this.extractionRules = [createEmptyExtractionRule()]
+    this.assertionRules = [createEmptyAssertionRule()]
     this.applyAuthFields(parseAuthConfig(undefined))
     this.response = null
     this.pinnedResponse = null

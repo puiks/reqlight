@@ -70,8 +70,26 @@
             </span>
             <span class="result-time">{formatTime(result.elapsedTime)}</span>
           </div>
+          {#if result.assertionResults?.length}
+            <div class="assertion-details">
+              {#each result.assertionResults as ar}
+                <div class="assertion-row" class:assertion-fail={!ar.passed}>
+                  <span class="assertion-icon">{ar.passed ? "✓" : "✗"}</span>
+                  <span class="assertion-msg">{ar.message}</span>
+                  {#if !ar.passed && ar.actual !== null}
+                    <span class="assertion-actual">actual: {ar.actual}</span>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {/if}
           {#if result.errorMessage}
             <div class="result-error">{result.errorMessage}</div>
+          {/if}
+          {#if !result.passed && result.responseBody}
+            <div class="result-body">
+              <pre>{result.responseBody}</pre>
+            </div>
           {/if}
         {/each}
       </div>
@@ -200,6 +218,50 @@
     width: 60px;
     text-align: right;
     flex-shrink: 0;
+  }
+  .assertion-details {
+    padding: 2px var(--sp-sm) var(--sp-xs) calc(20px + var(--sp-sm) + var(--sp-sm));
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .assertion-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+  }
+  .assertion-row.assertion-fail {
+    color: var(--color-error);
+  }
+  .assertion-icon {
+    font-weight: 700;
+    width: 12px;
+    flex-shrink: 0;
+  }
+  .assertion-msg {
+    flex: 1;
+  }
+  .assertion-actual {
+    color: var(--text-tertiary);
+    font-family: var(--font-mono, monospace);
+  }
+  .result-body {
+    padding: 2px var(--sp-sm) var(--sp-xs) calc(20px + var(--sp-sm) + var(--sp-sm));
+  }
+  .result-body pre {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-xs) var(--sp-sm);
+    max-height: 120px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
   }
   .result-error {
     padding: 2px var(--sp-sm) var(--sp-xs) calc(20px + var(--sp-sm) + var(--sp-sm));

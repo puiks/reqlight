@@ -7,12 +7,14 @@
   let {
     collection,
     oncontextmenu,
+    oncontextrequest,
     ondelete,
     ondeleterequest,
     onrun,
   }: {
     collection: RequestCollection;
     oncontextmenu?: (e: MouseEvent) => void;
+    oncontextrequest?: (e: MouseEvent, requestId: string) => void;
     ondelete?: () => void;
     ondeleterequest?: (requestId: string, requestName: string) => void;
     onrun?: () => void;
@@ -104,6 +106,7 @@
             {request}
             isSelected={appStore.selectedRequestId === request.id}
             onclick={() => selectRequest(request.id)}
+            oncontextmenu={(e) => { e.preventDefault(); oncontextrequest?.(e, request.id); }}
             ondelete={() => ondeleterequest?.(request.id, request.name)}
           />
         </div>

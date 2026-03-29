@@ -5,6 +5,7 @@ import type {
   RequestCollection,
   SavedRequest,
 } from '../types'
+import { evaluateAssertions } from '../utils/assertion'
 import { applyExtractionRules } from '../utils/extraction'
 import { appStore } from './app.svelte'
 import { environmentStore } from './environment.svelte'
@@ -84,12 +85,26 @@ class RunnerStore {
       // Apply extractions
       applyExtractionRules(request.responseExtractions ?? [], response)
 
-      const passed = response.statusCode >= 200 && response.statusCode < 300
+      // Evaluate assertions
+      const assertions = request.assertions?.filter((a) => a.isEnabled) ?? []
+      const assertionResults =
+        assertions.length > 0 ? evaluateAssertions(assertions, response) : undefined
+
+      // Pass/fail: if assertions exist, all must pass; otherwise fall back to 2xx check
+      const passed = assertionResults
+        ? assertionResults.every((r) => r.passed)
+        : response.statusCode >= 200 && response.statusCode < 300
+
+      // Store truncated body for debugging (first 2KB)
+      const responseBody = response.bodyString ? response.bodyString.slice(0, 2048) : null
+
       return {
         ...base,
         statusCode: response.statusCode,
         elapsedTime: response.elapsedTime,
         passed,
+        assertionResults,
+        responseBody,
       }
     } catch (e) {
       return {

@@ -6,6 +6,7 @@
     id,
     onaddrequest,
     onrename,
+    onduplicate,
     ondelete,
   }: {
     x: number;
@@ -14,6 +15,7 @@
     id: string;
     onaddrequest: (id: string) => void;
     onrename: (id: string) => void;
+    onduplicate?: (id: string) => void;
     ondelete: (id: string) => void;
   } = $props();
 </script>
@@ -31,6 +33,16 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div class="menu-item" role="menuitem" tabindex="-1" onclick={() => onrename(id)}>
       Rename
+    </div>
+    <div class="menu-divider"></div>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="menu-item danger" role="menuitem" tabindex="-1" onclick={() => ondelete(id)}>
+      Delete
+    </div>
+  {:else if type === "request"}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="menu-item" role="menuitem" tabindex="-1" onclick={() => onduplicate?.(id)}>
+      Duplicate
     </div>
     <div class="menu-divider"></div>
     <!-- svelte-ignore a11y_click_events_have_key_events -->

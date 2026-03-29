@@ -1,4 +1,5 @@
 import type {
+  AssertionRule,
   AuthConfig,
   AuthType,
   ApiKeyLocation,
@@ -18,6 +19,31 @@ export function createEmptyExtractionRule(): ExtractionRule {
     jsonPath: '',
     isEnabled: true,
   }
+}
+
+// Helper: create an empty AssertionRule
+export function createEmptyAssertionRule(): AssertionRule {
+  return {
+    id: crypto.randomUUID(),
+    source: { type: 'statusCode', value: '' },
+    operator: 'equals',
+    expected: null,
+    isEnabled: true,
+  }
+}
+
+/** Check if an assertion rule is complete enough to be saved/evaluated. */
+export function isAssertionComplete(rule: AssertionRule): boolean {
+  const { source, operator, expected } = rule
+  // Source types that require a value field
+  const needsSourceValue =
+    source.type === 'header' || source.type === 'jsonPath' || source.type === 'bodyContains'
+  if (needsSourceValue && !source.value) return false
+  // Operators that don't need an expected value
+  const noExpected = operator === 'exists' || operator === 'notExists'
+  if (noExpected) return true
+  // All other operators need a non-null expected value
+  return expected !== null && expected !== ''
 }
 
 // Helper: create an empty KeyValuePair
