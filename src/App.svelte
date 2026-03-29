@@ -36,6 +36,23 @@
   }
 
   onMount(() => {
+    // Initialize theme from saved preference or system default
+    const themeMode = localStorage.getItem("themeMode") ?? "system";
+    if (themeMode === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+        if (localStorage.getItem("themeMode") !== "system") return;
+        document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+      };
+      mediaQuery.addEventListener("change", handleSystemThemeChange);
+    } else {
+      document.documentElement.setAttribute("data-theme", themeMode);
+    }
+
     // Load persisted state
     appStore.load().then(() => {
       // Restore last selected request

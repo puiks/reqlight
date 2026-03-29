@@ -13,26 +13,6 @@
   function toggleSidebar() {
     appStore.sidebarVisible = !appStore.sidebarVisible;
   }
-
-  let isDark = $state(false);
-
-  $effect(() => {
-    // Initialize from saved preference or system
-    const saved = localStorage.getItem("theme");
-    if (saved) {
-      isDark = saved === "dark";
-    } else {
-      isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-  });
-
-  function toggleTheme() {
-    isDark = !isDark;
-    const theme = isDark ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }
 </script>
 
 <div class="toolbar" data-tauri-drag-region>
@@ -40,20 +20,15 @@
     <button class="icon-btn" onclick={toggleSidebar} title="Toggle Sidebar">
       ☰
     </button>
-  </div>
-
-  <div class="center" data-tauri-drag-region>
-    <span class="app-title">Reqlight</span>
-  </div>
-
-  <div class="right">
-    <EnvironmentPicker onmanage={onopenenvs} />
     <button class="icon-btn" onclick={onopensettings} title="Settings">
       ⚙
     </button>
-    <button class="icon-btn" onclick={toggleTheme} title="Toggle Theme">
-      {isDark ? '☀' : '☾'}
-    </button>
+  </div>
+
+  <div class="center" data-tauri-drag-region></div>
+
+  <div class="right">
+    <EnvironmentPicker onmanage={onopenenvs} />
   </div>
 </div>
 
@@ -72,21 +47,19 @@
   .right {
     display: flex;
     align-items: center;
-    gap: var(--sp-sm);
   }
   .center {
     flex: 1;
-    text-align: center;
-  }
-  .app-title {
-    font-size: var(--fs-body);
-    font-weight: 600;
-    color: var(--text-secondary);
   }
   .icon-btn {
-    font-size: var(--fs-callout);
-    padding: var(--sp-xs) var(--sp-sm);
+    font-size: var(--fs-title3);
+    padding: 2px;
     color: var(--text-secondary);
+    min-width: 26px;
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .icon-btn:hover {
     color: var(--text-primary);

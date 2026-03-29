@@ -194,8 +194,8 @@
     border-bottom: 1px solid var(--border-light);
   }
   .toggle {
-    font-size: var(--fs-caption);
-    padding: 2px var(--sp-sm);
+    font-size: var(--fs-small);
+    padding: 2px 6px;
     border-radius: var(--radius-sm);
     background: var(--bg-tertiary);
   }
@@ -210,12 +210,12 @@
     font-weight: 600;
   }
   .search-btn {
-    font-size: var(--fs-callout);
+    font-size: var(--fs-title3);
     color: var(--text-secondary);
-    padding: 0 var(--sp-xs);
+    padding: 2px 6px;
   }
   .copy-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--text-secondary);
     margin-left: auto;
   }

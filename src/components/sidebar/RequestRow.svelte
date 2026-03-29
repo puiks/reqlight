@@ -40,7 +40,7 @@
   .request-row {
     display: flex;
     align-items: center;
-    gap: var(--sp-sm);
+    gap: var(--sp-xs);
     padding: var(--sp-xs) var(--sp-sm) var(--sp-xs) var(--sp-xl);
     cursor: pointer;
     border-radius: var(--radius-sm);
@@ -53,11 +53,12 @@
     background: var(--bg-selected);
   }
   .name {
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+    line-height: 1;
   }
   .delete-btn {
     visibility: hidden;

@@ -138,10 +138,13 @@
     padding-right: var(--sp-sm);
   }
   .action-btn {
-    font-size: var(--fs-caption);
-    padding: 2px var(--sp-sm);
+    font-size: var(--fs-small);
+    padding: 2px 6px;
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
   }
   .action-btn:hover {
     background: var(--bg-hover);

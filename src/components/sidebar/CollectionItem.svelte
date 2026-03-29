@@ -11,6 +11,7 @@
     ondelete,
     ondeleterequest,
     onrun,
+    onaddrequest,
   }: {
     collection: RequestCollection;
     oncontextmenu?: (e: MouseEvent) => void;
@@ -18,6 +19,7 @@
     ondelete?: () => void;
     ondeleterequest?: (requestId: string, requestName: string) => void;
     onrun?: () => void;
+    onaddrequest?: () => void;
   } = $props();
 
   let expanded = $state(true);
@@ -70,22 +72,32 @@
     <span class="chevron" class:expanded>{expanded ? "▾" : "▸"}</span>
     <span class="name">{collection.name}</span>
     <span class="count">{collection.requests.length}</span>
-    {#if onrun}
-      <button
-        class="run-btn"
-        title="Run Collection"
-        aria-label="Run Collection"
-        onclick={(e) => { e.stopPropagation(); onrun?.(); }}
-      >▶</button>
-    {/if}
-    {#if ondelete}
-      <button
-        class="delete-btn"
-        title="Delete Collection"
-        aria-label="Delete Collection"
-        onclick={(e) => { e.stopPropagation(); ondelete?.(); }}
-      >✕</button>
-    {/if}
+    <span class="header-actions">
+      {#if onaddrequest}
+        <button
+          class="header-action-btn add-req-btn"
+          title="Add Request"
+          aria-label="Add Request"
+          onclick={(e) => { e.stopPropagation(); onaddrequest?.(); }}
+        >+</button>
+      {/if}
+      {#if onrun}
+        <button
+          class="header-action-btn run-btn"
+          title="Run Collection"
+          aria-label="Run Collection"
+          onclick={(e) => { e.stopPropagation(); onrun?.(); }}
+        >▶</button>
+      {/if}
+      {#if ondelete}
+        <button
+          class="header-action-btn delete-btn"
+          title="Delete Collection"
+          aria-label="Delete Collection"
+          onclick={(e) => { e.stopPropagation(); ondelete?.(); }}
+        >✕</button>
+      {/if}
+    </span>
   </div>
   {#if expanded}
     <div class="requests">
@@ -126,8 +138,9 @@
     padding: var(--sp-xs) var(--sp-sm);
     cursor: pointer;
     border-radius: var(--radius-sm);
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     font-weight: 600;
+    position: relative;
   }
   .header:hover {
     background: var(--bg-hover);
@@ -149,33 +162,49 @@
     color: var(--text-tertiary);
     font-weight: 400;
   }
-  .run-btn {
-    visibility: hidden;
-    font-size: var(--fs-caption);
+  .header-actions {
+    display: none;
+    position: absolute;
+    right: var(--sp-xs);
+    top: 50%;
+    transform: translateY(-50%);
+    align-items: center;
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+  }
+  .header:hover .count {
+    display: none;
+  }
+  .header:hover .header-actions {
+    display: inline-flex;
+  }
+  .header-action-btn {
+    font-size: var(--fs-small);
     color: var(--text-tertiary);
-    padding: 0 var(--sp-xs);
+    padding: 2px;
+    min-width: 22px;
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
-    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+  }
+  .add-req-btn {
+    font-size: var(--fs-callout);
+    font-weight: 600;
+  }
+  .add-req-btn:hover {
+    color: var(--color-info);
+    background: var(--bg-tertiary);
   }
   .run-btn:hover {
     color: var(--color-success);
-  }
-  .header:hover .run-btn {
-    visibility: visible;
-  }
-  .delete-btn {
-    visibility: hidden;
-    font-size: var(--fs-body);
-    color: var(--text-tertiary);
-    padding: 0 var(--sp-xs);
-    line-height: 1;
-    flex-shrink: 0;
+    background: var(--bg-tertiary);
   }
   .delete-btn:hover {
     color: var(--color-error);
-  }
-  .header:hover .delete-btn {
-    visibility: visible;
+    background: var(--bg-tertiary);
   }
   .requests {
     padding-left: var(--sp-xs);

@@ -145,6 +145,48 @@ src-tauri/src/                # Rust Backend
 - **Adding new tokens**: When a new visual value is needed, first check if an existing token fits. If not, add the new token to `app.css` `:root` with both light and dark variants, then reference it in the component.
 - **Scoped vs global styles**: Component-specific layout styles (flex, grid, dimensions) stay in `<style>` blocks. Visual properties (colors, spacing, typography) must use tokens. Syntax highlighting classes (`.json-key`, `.xml-tag`, etc.) are global in `app.css`.
 
+### UI Design Standards
+
+#### Typography Scale by Role
+
+| Role                         | Token           | Size | Usage                                                   |
+| ---------------------------- | --------------- | ---- | ------------------------------------------------------- |
+| Section titles, modal titles | `--fs-subhead`  | 16px | Headings within modals, panel section titles            |
+| UI text (primary)            | `--fs-callout`  | 14px | Tab buttons, labels, inputs, sidebar items, form fields |
+| Body text                    | `--fs-body`     | 13px | Mono-spaced content (URL inputs, code)                  |
+| Compact actions              | `--fs-small`    | 12px | Copy/Diff/Pin/toggle buttons, secondary controls        |
+| Badges & meta                | `--fs-footnote` | 11px | HTTP method badges, status indicators                   |
+| Timestamps & hints           | `--fs-caption`  | 10px | Timestamps, subtle metadata, input hints                |
+
+#### Button Sizing Patterns
+
+- **Icon buttons** (toolbar, sidebar actions): `font-size: var(--fs-title3)` (18px), `padding: 2px`, `min-width: 26px`, `min-height: 26px`
+- **Tab buttons** (HTTP/WS, editor tabs): `font-size: var(--fs-callout)` (14px), `padding: 8px 16px`
+- **Compact text buttons** (Copy, Diff, Pin): `font-size: var(--fs-small)` (12px), `padding: 2px 6px`
+- **Primary action buttons** (Send, Connect): `font-weight: 600`, `padding: var(--sp-xs) var(--sp-lg)`
+
+#### Layout Spacing with Stack Component
+
+Use the `Stack` component (`shared/Stack.svelte`) for consistent vertical/horizontal spacing:
+
+- **Title → content gap**: `spacing="xs"` (4px) — between a section heading and its content
+- **Content item gap**: `spacing="sm"` (8px) — between sibling form fields or controls
+- **Section gap**: `spacing="xl"` (20px) — between distinct sections within a modal/panel
+
+#### Reusable Shared Components
+
+- **`Stack`** — Flex layout with semantic spacing props (`xs`/`sm`/`md`/`lg`/`xl`), direction, alignment
+- **`LabeledField`** — Horizontal label + input layout with optional hint text
+- **`SearchInput`** — Text input with proper placeholder ellipsis and flexible width
+- **`HttpMethodBadge`** — Colored method label (GET/POST/etc.) with mono font
+- **`Modal`** — Centered overlay with title bar and close button
+
+#### Hover Interaction Patterns
+
+- **Sidebar collection headers**: Action buttons (add/run/delete) are `display: none` by default, shown as `inline-flex` on hover with `position: absolute` to overlay the count badge
+- **Request rows**: Delete button uses `visibility: hidden/visible` on hover
+- **Icon buttons**: Lighten color to `--text-primary` and add `background: var(--bg-tertiary)` on hover
+
 ### Commit Discipline
 
 - **Atomic commits.** Each commit should represent one logical change (one feature, one bug fix, one refactor). Do not bundle unrelated changes into a single commit.

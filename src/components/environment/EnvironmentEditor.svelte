@@ -36,26 +36,28 @@
   }
 </script>
 
-<Modal title="Environments" {onclose}>
+<Modal title="Environments" {onclose} noPadding>
   <div class="env-editor">
     <div class="env-list">
-      <div class="list-header">
-        <button class="add-btn" onclick={addEnvironment}>+ Add</button>
+      <div class="list-items">
+        {#each environmentStore.environments as env (env.id)}
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class="env-item"
+            class:selected={selectedEnvId === env.id}
+            onclick={() => (selectedEnvId = env.id)}
+          >
+            {env.name}
+          </div>
+        {/each}
+        {#if environmentStore.environments.length === 0}
+          <div class="no-envs">No environments yet.</div>
+        {/if}
       </div>
-      {#each environmentStore.environments as env (env.id)}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="env-item"
-          class:selected={selectedEnvId === env.id}
-          onclick={() => (selectedEnvId = env.id)}
-        >
-          {env.name}
-        </div>
-      {/each}
-      {#if environmentStore.environments.length === 0}
-        <div class="no-envs">No environments yet.</div>
-      {/if}
+      <div class="list-footer">
+        <button class="add-btn" onclick={addEnvironment}>+ New Environment</button>
+      </div>
     </div>
 
     <div class="env-detail">
@@ -66,8 +68,11 @@
             class="env-name-input"
             value={selectedEnv.name}
             oninput={handleNameChange}
+            placeholder="Environment name"
           />
-          <button class="delete-btn" onclick={deleteEnvironment}>Delete</button>
+          <button class="delete-btn" onclick={deleteEnvironment} title="Delete Environment">
+            ✕
+          </button>
         </div>
         <div class="vars-section">
           <KeyValueEditor
@@ -86,30 +91,42 @@
 <style>
   .env-editor {
     display: flex;
-    gap: 0;
-    min-height: 320px;
+    min-height: 360px;
+    min-width: 560px;
   }
   .env-list {
-    width: 200px;
+    width: 180px;
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
   }
-  .list-header {
+  .list-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--sp-xs);
+  }
+  .list-footer {
     padding: var(--sp-sm);
-    border-bottom: 1px solid var(--border-light);
+    border-top: 1px solid var(--border-light);
   }
   .add-btn {
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     color: var(--color-info);
     font-weight: 600;
+    width: 100%;
+    text-align: left;
+    padding: var(--sp-xs) var(--sp-sm);
+    border-radius: var(--radius-sm);
+  }
+  .add-btn:hover {
+    background: var(--bg-hover);
   }
   .env-item {
     padding: var(--sp-sm) var(--sp-md);
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     cursor: pointer;
     border-radius: var(--radius-sm);
-    margin: 1px var(--sp-xs);
   }
   .env-item:hover {
     background: var(--bg-hover);
@@ -121,7 +138,7 @@
   }
   .no-envs {
     padding: var(--sp-md);
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     color: var(--text-tertiary);
     text-align: center;
   }
@@ -129,14 +146,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: var(--sp-sm);
     min-width: 0;
   }
   .detail-header {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
-    margin-bottom: var(--sp-md);
+    padding: var(--sp-sm) var(--sp-md);
+    border-bottom: 1px solid var(--border-light);
   }
   .env-name-input {
     flex: 1;
@@ -145,13 +162,25 @@
     padding: var(--sp-xs) var(--sp-sm);
   }
   .delete-btn {
-    font-size: var(--fs-small);
+    font-size: var(--fs-title3);
+    color: var(--text-tertiary);
+    padding: 2px 6px;
+    min-width: 28px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+  }
+  .delete-btn:hover {
     color: var(--color-error);
-    padding: var(--sp-xs) var(--sp-sm);
+    background: var(--bg-hover);
   }
   .vars-section {
     flex: 1;
     overflow: auto;
+    padding: var(--sp-sm);
   }
   .no-selection {
     display: flex;
@@ -159,6 +188,6 @@
     justify-content: center;
     height: 100%;
     color: var(--text-tertiary);
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
   }
 </style>

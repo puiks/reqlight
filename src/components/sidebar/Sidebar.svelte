@@ -135,14 +135,14 @@
 
 <div class="sidebar">
   <div class="toolbar">
-    <span class="title">Collections</span>
+    <SearchBar />
     <div class="toolbar-actions">
-      <button class="tool-btn" onclick={oncollectionio} title="Import / Export">⇄</button>
-      <button class="tool-btn add-btn" onclick={handleAddCollection} title="New Collection (⌘⇧N)">+</button>
+      <button class="tool-btn" onclick={oncollectionio} title="Import / Export Collections">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+      </button>
+      <button class="tool-btn" onclick={handleAddCollection} title="New Collection (⌘⇧N)">+</button>
     </div>
   </div>
-
-  <SearchBar />
 
   <div class="list">
     {#if appStore.filteredCollections.length === 0}
@@ -193,6 +193,7 @@
               ondelete={() => handleDelete("collection", collection.id, collection.name)}
               ondeleterequest={(id, name) => handleDelete("request", id, name)}
               onrun={() => onruncollection?.(collection)}
+              onaddrequest={() => handleAddRequest(collection.id)}
             />
           {/if}
         </div>
@@ -237,33 +238,29 @@
   .toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: var(--sp-sm) var(--sp-md);
+    gap: var(--sp-xs);
+    padding: var(--sp-xs) var(--sp-sm);
     border-bottom: 1px solid var(--border-color);
-  }
-  .title {
-    font-size: var(--fs-small);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
   }
   .toolbar-actions {
     display: flex;
     align-items: center;
-    gap: var(--sp-xs);
+    flex-shrink: 0;
   }
   .tool-btn {
-    font-size: var(--fs-callout);
-    padding: 0 var(--sp-xs);
+    font-size: var(--fs-title3);
+    padding: 2px;
     color: var(--text-secondary);
+    min-width: 26px;
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
   }
   .tool-btn:hover {
     color: var(--text-primary);
-  }
-  .add-btn {
-    font-size: var(--fs-title3);
-    font-weight: 300;
+    background: var(--bg-hover);
   }
   .list {
     flex: 1;

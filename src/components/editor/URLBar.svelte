@@ -1,8 +1,13 @@
 <script lang="ts">
   import { editorStore } from "../../lib/stores/editor.svelte";
+  import { exportCurl } from "../../lib/commands";
+  import { environmentStore } from "../../lib/stores/environment.svelte";
+  import { toastStore } from "../../lib/stores/toast.svelte";
   import { HTTP_METHODS, METHOD_COLORS, type HttpMethod } from "../../lib/types";
 
   let { onimportcurl }: { onimportcurl: () => void } = $props();
+
+  let showCurlMenu = $state(false);
 
   function handleSend() {
     editorStore.send();
@@ -13,16 +18,60 @@
       handleSend();
     }
   }
+
+  function toggleCurlMenu() {
+    showCurlMenu = !showCurlMenu;
+  }
+
+  function handleImportCurl() {
+    showCurlMenu = false;
+    onimportcurl();
+  }
+
+  async function handleExportCurl() {
+    showCurlMenu = false;
+    const request = editorStore.toSavedRequest();
+    if (!request) {
+      toastStore.show("No request to export");
+      return;
+    }
+    try {
+      const activeEnv = environmentStore.environments.find(
+        (e) => e.id === environmentStore.activeEnvironmentId,
+      );
+      const curl = await exportCurl(request, activeEnv);
+      await navigator.clipboard.writeText(curl);
+      toastStore.show("cURL copied to clipboard");
+    } catch (e) {
+      toastStore.show("Failed to export cURL");
+    }
+  }
 </script>
 
+<svelte:window onclick={() => (showCurlMenu = false)} />
+
 <div class="url-bar">
-  <button
-    class="import-curl-btn"
-    onclick={onimportcurl}
-    title="Import from cURL"
-  >
-    cURL
-  </button>
+  <div class="curl-wrapper">
+    <button
+      class="import-curl-btn"
+      onclick={(e) => { e.stopPropagation(); toggleCurlMenu(); }}
+      title="cURL Import / Export"
+    >
+      cURL
+    </button>
+    {#if showCurlMenu}
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="curl-menu" onclick={(e) => e.stopPropagation()}>
+        <button class="curl-menu-item" onclick={handleImportCurl}>
+          Import from cURL
+        </button>
+        <button class="curl-menu-item" onclick={handleExportCurl}>
+          Copy as cURL
+        </button>
+      </div>
+    {/if}
+  </div>
 
   <select
     class="method-select"
@@ -67,19 +116,48 @@
     border-bottom: 1px solid var(--border-color);
     align-items: center;
   }
+  .curl-wrapper {
+    position: relative;
+    flex-shrink: 0;
+  }
   .import-curl-btn {
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     font-family: var(--font-mono);
-    padding: var(--sp-xs) var(--sp-sm);
+    padding: 2px 6px;
     color: var(--text-tertiary);
     border-radius: var(--radius-sm);
     white-space: nowrap;
     border: 1px dashed var(--border-color);
-    flex-shrink: 0;
+    min-height: 28px;
   }
   .import-curl-btn:hover {
     color: var(--text-primary);
     border-color: var(--text-secondary);
+  }
+  .curl-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: var(--sp-xs);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-elevated);
+    min-width: 160px;
+    z-index: 50;
+    overflow: hidden;
+  }
+  .curl-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: var(--sp-sm) var(--sp-md);
+    font-size: var(--fs-callout);
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .curl-menu-item:hover {
+    background: var(--bg-hover);
   }
   .method-select {
     font-family: var(--font-mono);

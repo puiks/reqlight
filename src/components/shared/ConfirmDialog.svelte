@@ -53,12 +53,12 @@
     box-shadow: var(--shadow-modal);
   }
   h3 {
-    font-size: var(--fs-callout);
+    font-size: var(--fs-subhead);
     font-weight: 600;
     margin-bottom: var(--sp-sm);
   }
   p {
-    font-size: var(--fs-body);
+    font-size: var(--fs-callout);
     color: var(--text-secondary);
     margin-bottom: var(--sp-lg);
   }
