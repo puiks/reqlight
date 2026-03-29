@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- cURL export: click the `cURL` button in URL bar to import or copy current request as cURL
+- Reusable shared components: `Stack` (flex layout with spacing), `LabeledField` (horizontal label+input), `SearchInput` (text input with placeholder ellipsis)
+- `noPadding` prop for `Modal` component to support full-bleed content layouts
+- UI Design Standards section in CLAUDE.md documenting typography scale, button sizing, spacing patterns, and hover interactions
+
+### Changed
+
+- Unified typography scale across all components: section titles (16px), UI text (14px), compact buttons (12px), badges (11px), hints (10px)
+- Sidebar: removed "Collections" title bar, redesigned toolbar with search + import/export + add in one row
+- Sidebar collection hover: action buttons overlay count badge with absolute positioning
+- Import/export icon changed to bidirectional arrows for clarity
+- Settings modal redesigned: section titles demoted to 14px secondary, proxy toggle moved inline with section header, consistent label alignment (80px min-width)
+- Environment editor modal uses full-bleed layout for unbroken divider lines
+- WebSocket panel font sizes upgraded from 10px to 12px for readability
+- Toolbar restructured: settings gear moved to left side, theme toggle moved into Settings modal with System/Light/Dark segmented control
+- Button sizing standardized: icon buttons 18px/26×26, tab buttons 14px/8×16px padding, compact buttons 12px/2×6px padding
+- HttpMethodBadge compacted with min-width and consistent line-height for vertical alignment
+- Dark mode now supports system preference tracking via MediaQueryList listener
+
+### Fixed
+
+- ErrorFallback component using undefined CSS token names
+- OAuth2Editor using undefined `--accent` and `--fs-xsmall` tokens
+- LabeledField vertical alignment when hint text is present (flex-start + padding-top)
+
 ## [0.7.1] - 2026-03-29
 
 ### Changed

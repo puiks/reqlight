@@ -246,8 +246,8 @@
     cursor: not-allowed;
   }
   .btn-primary {
-    background: var(--accent);
-    color: var(--bg-primary);
+    background: var(--color-info);
+    color: white;
   }
   .btn-secondary {
     background: var(--bg-tertiary);
@@ -272,7 +272,7 @@
     color: var(--text-secondary);
   }
   .token-expiry {
-    font-size: var(--fs-xsmall, 11px);
+    font-size: var(--fs-footnote);
     color: var(--text-tertiary);
   }
 </style>

@@ -146,7 +146,7 @@
   .ws-badge {
     font-family: var(--font-mono);
     font-weight: 700;
-    font-size: var(--fs-caption);
+    font-size: var(--fs-footnote);
     color: var(--color-method-post);
     background: color-mix(in srgb, var(--color-method-post) 12%, transparent);
     padding: 2px 6px;
@@ -180,12 +180,12 @@
     align-items: center;
     gap: var(--sp-md);
     padding: var(--sp-xs) var(--sp-md);
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border-color);
   }
   .toggle-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     padding: 2px var(--sp-sm);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
@@ -200,7 +200,7 @@
     align-items: center;
     gap: var(--sp-xs);
     cursor: pointer;
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
   }
   .reconnect-toggle input {
     margin: 0;
@@ -241,22 +241,22 @@
   .header-value {
     flex: 1;
     font-family: var(--font-mono);
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     padding: 2px var(--sp-xs);
   }
   .header-key {
     max-width: 40%;
   }
   .remove-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--text-tertiary);
-    padding: 0 4px;
+    padding: 0 var(--sp-xs);
   }
   .remove-btn:hover {
     color: var(--color-error);
   }
   .add-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--color-info);
     align-self: flex-start;
     padding: 2px var(--sp-sm);

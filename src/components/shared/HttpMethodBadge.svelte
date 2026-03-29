@@ -13,9 +13,10 @@
     font-size: var(--fs-footnote);
     font-weight: 600;
     font-family: var(--font-mono);
-    width: 38px;
-    display: inline-block;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
+    min-width: 32px;
+    line-height: 1;
   }
 </style>

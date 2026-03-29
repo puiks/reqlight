@@ -113,7 +113,7 @@
     align-items: center;
     gap: 1px;
     padding: var(--sp-xs) 0;
-    font-size: var(--fs-footnote);
+    font-size: var(--fs-callout);
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -136,7 +136,7 @@
     background: transparent;
     padding: var(--sp-xs) var(--sp-sm);
     font-family: var(--font-mono);
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     border-radius: 0;
   }
   .row input[type="text"]:focus,
@@ -167,8 +167,8 @@
     flex-shrink: 0;
   }
   .secret-btn {
-    font-size: var(--fs-small);
-    padding: 2px;
+    font-size: var(--fs-callout);
+    padding: var(--sp-xs);
   }
   .action-col {
     width: 28px;
@@ -178,9 +178,9 @@
     flex-shrink: 0;
   }
   .delete-btn {
-    font-size: 16px;
+    font-size: var(--fs-subhead);
     color: var(--text-tertiary);
-    padding: 0 4px;
+    padding: 0 var(--sp-xs);
     line-height: 1;
   }
   .delete-btn:hover {

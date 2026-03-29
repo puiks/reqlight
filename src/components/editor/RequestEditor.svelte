@@ -96,8 +96,8 @@
     flex-shrink: 0;
   }
   .proto-tab {
-    padding: var(--sp-xs) var(--sp-md);
-    font-size: var(--fs-caption);
+    padding: var(--sp-sm) var(--sp-lg);
+    font-size: var(--fs-callout);
     font-weight: 600;
     color: var(--text-tertiary);
     border-bottom: 2px solid transparent;

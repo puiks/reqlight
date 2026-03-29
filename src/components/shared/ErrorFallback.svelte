@@ -32,7 +32,7 @@
     height: 100%;
     padding: var(--sp-xl);
     text-align: center;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
   }
 
   .error-icon {
@@ -51,14 +51,14 @@
 
   h2 {
     margin: 0 0 var(--sp-sm);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-lg);
+    color: var(--text-primary);
+    font-size: var(--fs-subhead);
   }
 
   .error-message {
     margin: 0 0 var(--sp-lg);
     font-family: var(--font-mono);
-    font-size: var(--font-size-sm);
+    font-size: var(--fs-callout);
     max-width: 500px;
     word-break: break-word;
   }
@@ -71,18 +71,18 @@
   .actions button {
     padding: var(--sp-sm) var(--sp-lg);
     border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    font-size: var(--font-size-sm);
+    font-size: var(--fs-callout);
   }
 
   .btn-retry {
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
   }
 
   .btn-retry:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--bg-tertiary);
   }
 
   .btn-reload {

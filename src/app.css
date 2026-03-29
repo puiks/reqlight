@@ -51,6 +51,7 @@
   --fs-small: 12px;
   --fs-body: 13px;
   --fs-callout: 14px;
+  --fs-subhead: 16px;
   --fs-title3: 18px;
   --fs-title2: 24px;
   --fs-icon-lg: 40px;
@@ -183,6 +184,11 @@ textarea {
   user-select: text;
 }
 
+input::placeholder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 input:focus,
 textarea:focus {
   border-color: var(--color-info);
@@ -223,7 +229,7 @@ button:hover {
 }
 .tab-bar > button {
   padding: var(--sp-sm) var(--sp-lg);
-  font-size: var(--fs-small);
+  font-size: var(--fs-callout);
   font-weight: 500;
   color: var(--text-secondary);
   border-bottom: 2px solid transparent;

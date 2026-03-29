@@ -60,9 +60,9 @@
     padding-bottom: var(--sp-xs);
   }
   .copy-all-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--text-secondary);
-    padding: 2px var(--sp-sm);
+    padding: 2px 6px;
     border-radius: var(--radius-sm);
   }
   .copy-all-btn:hover {
@@ -106,11 +106,11 @@
     padding: 0;
   }
   .copy-value-btn {
-    font-size: var(--fs-callout);
+    font-size: var(--fs-title3);
     color: var(--text-tertiary);
     opacity: 0;
     transition: opacity var(--transition-fast);
-    padding: 2px;
+    padding: 2px 6px;
   }
   tr:hover .copy-value-btn {
     opacity: 1;

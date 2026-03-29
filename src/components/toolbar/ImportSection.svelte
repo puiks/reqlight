@@ -61,7 +61,7 @@
     gap: var(--sp-sm);
   }
   .file-upload {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-callout);
     color: var(--text-secondary);
   }
   .file-label {
@@ -70,13 +70,13 @@
   .file-input {
     display: block;
     margin-top: var(--sp-xs);
-    font-size: var(--fs-caption);
+    font-size: var(--fs-callout);
   }
   .json-textarea {
     width: 100%;
     min-height: 150px;
     font-family: var(--font-mono);
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     padding: var(--sp-sm);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -96,7 +96,7 @@
     cursor: not-allowed;
   }
   .error {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--color-error);
     padding: var(--sp-xs);
   }

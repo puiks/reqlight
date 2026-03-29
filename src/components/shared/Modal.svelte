@@ -6,7 +6,8 @@
     onclose,
     children,
     wide = false,
-  }: { title: string; onclose: () => void; children: Snippet; wide?: boolean } = $props();
+    noPadding = false,
+  }: { title: string; onclose: () => void; children: Snippet; wide?: boolean; noPadding?: boolean } = $props();
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") onclose();
@@ -23,7 +24,7 @@
       <h2>{title}</h2>
       <button class="close-btn" onclick={onclose} aria-label="Close">✕</button>
     </div>
-    <div class="body">
+    <div class="body" class:no-padding={noPadding}>
       {@render children()}
     </div>
   </div>
@@ -58,7 +59,7 @@
     border-bottom: 1px solid var(--border-color);
   }
   .header h2 {
-    font-size: var(--fs-callout);
+    font-size: var(--fs-subhead);
     font-weight: 600;
   }
   .close-btn {
@@ -70,6 +71,9 @@
     padding: var(--sp-lg);
     overflow-y: auto;
     flex: 1;
+  }
+  .body.no-padding {
+    padding: 0;
   }
   .modal.wide {
     min-width: 800px;

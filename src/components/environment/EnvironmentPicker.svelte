@@ -30,20 +30,21 @@
     gap: var(--sp-xs);
   }
   .env-select {
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     background: var(--bg-input);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    padding: 2px var(--sp-sm);
+    padding: 2px 6px;
     color: var(--text-primary);
     cursor: pointer;
   }
   .manage-btn {
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     color: var(--text-secondary);
-    padding: var(--sp-xs) var(--sp-sm);
+    padding: 2px 6px;
     border-radius: var(--radius-sm);
     white-space: nowrap;
+    min-height: 28px;
   }
   .manage-btn:hover {
     color: var(--text-primary);

@@ -200,8 +200,8 @@
     padding-bottom: var(--sp-xs);
   }
   .tab {
-    font-size: var(--fs-small);
-    padding: var(--sp-xs) var(--sp-lg);
+    font-size: var(--fs-callout);
+    padding: var(--sp-sm) var(--sp-lg);
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     color: var(--text-secondary);
   }
@@ -215,7 +215,7 @@
     gap: var(--sp-xs);
   }
   .type-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     padding: var(--sp-xs) var(--sp-md);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
@@ -234,7 +234,7 @@
     width: 100%;
     min-height: 150px;
     font-family: var(--font-mono);
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     padding: var(--sp-sm);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -247,7 +247,7 @@
   }
   .select {
     width: 100%;
-    font-size: var(--fs-small);
+    font-size: var(--fs-callout);
     padding: var(--sp-xs) var(--sp-sm);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -270,13 +270,13 @@
     gap: var(--sp-sm);
   }
   .small-btn {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-callout);
     padding: var(--sp-xs) var(--sp-md);
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
   }
   .error {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-small);
     color: var(--color-error);
     padding: var(--sp-xs);
   }
