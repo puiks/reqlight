@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-03-29
+
 ### Changed
 
 - Release flow: version bumps now run via GitHub Actions (`bump.yml` workflow dispatch) instead of local `bump.sh` + direct push to main
