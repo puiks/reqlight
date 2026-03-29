@@ -28,6 +28,7 @@ fn make_test_collection() -> RequestCollection {
             created_at: String::new(),
             updated_at: String::new(),
             response_extractions: vec![],
+            assertions: vec![],
             timeout_secs: None,
         }],
         sort_order: 0,
@@ -114,6 +115,7 @@ fn roundtrip_import_export_preserves_key_data() {
                 created_at: String::new(),
                 updated_at: String::new(),
                 response_extractions: vec![],
+                assertions: vec![],
                 timeout_secs: None,
             },
             SavedRequest {
@@ -131,6 +133,7 @@ fn roundtrip_import_export_preserves_key_data() {
                 created_at: String::new(),
                 updated_at: String::new(),
                 response_extractions: vec![],
+                assertions: vec![],
                 timeout_secs: None,
             },
         ],

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Assertion system: declarative response validation rules (status code, response time, headers, JSONPath, body contains)
+- Assertion editor UI with source/operator/expected grid in the new "Assert" tab
+- Collection runner evaluates assertions to determine pass/fail (replaces default 2xx check when assertions exist)
+- Runner results display per-assertion pass/fail details with actual vs expected values
+- Runner results include response body preview (first 2KB) for failed requests
+- Right-click context menu on requests with "Duplicate" and "Delete" actions
+
+### Fixed
+
+- Assertion filter logic: incomplete assertions (missing expected value or source value) are no longer silently saved
+- Context menu delete on requests now correctly deletes the request instead of looking up as collection
+
 ## [0.5.2] - 2026-03-29
 
 ### Changed

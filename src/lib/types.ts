@@ -57,6 +57,39 @@ export interface ExtractionRule {
   isEnabled: boolean
 }
 
+// Assertion types
+export interface AssertionSource {
+  type: 'statusCode' | 'responseTime' | 'header' | 'jsonPath' | 'bodyContains'
+  value: string
+}
+
+export type AssertionOperator =
+  | 'equals'
+  | 'notEquals'
+  | 'contains'
+  | 'notContains'
+  | 'greaterThan'
+  | 'lessThan'
+  | 'exists'
+  | 'notExists'
+  | 'typeIs'
+
+export interface AssertionRule {
+  id: string
+  source: AssertionSource
+  operator: AssertionOperator
+  expected: string | null
+  isEnabled: boolean
+}
+
+export interface AssertionResult {
+  ruleId: string
+  passed: boolean
+  actual: string | null
+  expected: string | null
+  message: string
+}
+
 export interface SavedRequest {
   id: string
   name: string
@@ -70,6 +103,7 @@ export interface SavedRequest {
   createdAt: string
   updatedAt: string
   responseExtractions?: ExtractionRule[]
+  assertions?: AssertionRule[]
   timeoutSecs?: number
 }
 
@@ -136,7 +170,7 @@ export interface AppState {
 
 export type CodegenLanguage = 'javascript-fetch' | 'javascript-axios' | 'python-requests' | 'curl'
 
-export type EditorTab = 'params' | 'headers' | 'auth' | 'body' | 'extract'
+export type EditorTab = 'params' | 'headers' | 'auth' | 'body' | 'extract' | 'assert'
 export type ResponseTab = 'body' | 'headers'
 
 export const HTTP_METHODS: HttpMethod[] = [
@@ -169,6 +203,9 @@ export interface CollectionRunResult {
   elapsedTime: number | null
   passed: boolean
   errorMessage?: string
+  assertionResults?: AssertionResult[]
+  /** Truncated response body for debugging failed requests (first 2KB) */
+  responseBody?: string | null
 }
 
 export type CollectionRunStatus = 'idle' | 'running' | 'stopped' | 'completed'

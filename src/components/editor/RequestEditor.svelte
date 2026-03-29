@@ -6,6 +6,7 @@
   import BodyEditor from "./BodyEditor.svelte";
   import AuthEditor from "./AuthEditor.svelte";
   import ExtractionEditor from "./ExtractionEditor.svelte";
+  import AssertionEditor from "./AssertionEditor.svelte";
   import WebSocketPanel from "./WebSocketPanel.svelte";
   import EmptyState from "../shared/EmptyState.svelte";
 
@@ -64,6 +65,8 @@
         <BodyEditor />
       {:else if editorStore.activeEditorTab === "extract"}
         <ExtractionEditor />
+      {:else if editorStore.activeEditorTab === "assert"}
+        <AssertionEditor />
       {/if}
     </div>
   {:else}

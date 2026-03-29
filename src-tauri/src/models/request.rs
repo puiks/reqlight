@@ -138,6 +138,8 @@ pub struct SavedRequest {
     #[serde(default)]
     pub response_extractions: Vec<super::extraction::ExtractionRule>,
     #[serde(default)]
+    pub assertions: Vec<super::assertion::AssertionRule>,
+    #[serde(default)]
     pub timeout_secs: Option<u64>,
 }
 
@@ -164,6 +166,7 @@ impl Default for SavedRequest {
             created_at: now_iso8601(),
             updated_at: now_iso8601(),
             response_extractions: vec![],
+            assertions: vec![],
             timeout_secs: None,
         }
     }

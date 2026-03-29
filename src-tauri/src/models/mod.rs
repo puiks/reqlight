@@ -1,3 +1,4 @@
+pub mod assertion;
 pub mod auth;
 pub mod collection;
 pub mod environment;

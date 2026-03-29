@@ -8,6 +8,7 @@
     { value: "auth", label: "Auth" },
     { value: "body", label: "Body" },
     { value: "extract", label: "Extract" },
+    { value: "assert", label: "Assert" },
   ];
 </script>
 
