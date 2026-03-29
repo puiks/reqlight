@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-03-29
+
 ### Added
 
 - cURL export: click the `cURL` button in URL bar to import or copy current request as cURL
