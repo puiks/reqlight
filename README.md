@@ -71,4 +71,4 @@ The output binary will be in `src-tauri/target/release/`.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
