@@ -1,6 +1,6 @@
 # Reqlight
 
-A lightweight, cross-platform HTTP client built with [Tauri](https://tauri.app/).
+A lightweight, cross-platform HTTP client built with [Tauri v2](https://v2.tauri.app/).
 
 > **Reqlight** is a fast, minimal alternative to Postman. No login required. Fully offline. Your data stays local.
 
